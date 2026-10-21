@@ -79,6 +79,29 @@
 
   .secao{font-size:12px;letter-spacing:2px;color:var(--muted);font-weight:700;margin:30px 0 10px}
 
+  /* painel de teoria */
+  .teoria{border:1px solid rgba(157,123,255,.4);border-radius:14px;margin:22px 0 6px;
+    background:linear-gradient(160deg,rgba(157,123,255,.07),rgba(91,157,255,.04));overflow:hidden}
+  .teoria > header{display:flex;align-items:center;gap:10px;padding:13px 18px;cursor:pointer;
+    user-select:none;transition:background .15s}
+  .teoria > header:hover{background:rgba(157,123,255,.08)}
+  .teoria > header .rot{font-size:13px;letter-spacing:1.5px;font-weight:700;color:var(--accent2)}
+  .teoria > header .dica-t{margin-left:auto;font-size:11px;color:var(--muted)}
+  .teoria > header .chev{color:var(--accent2);transition:transform .25s;font-size:12px}
+  .teoria.aberta > header .chev{transform:rotate(90deg)}
+  .teoria .corpo-t{display:none;padding:4px 22px 18px;font-size:15.5px;line-height:1.7}
+  .teoria.aberta .corpo-t{display:block;animation:sobe .4s ease forwards}
+  .corpo-t h3{color:var(--accent2);font-size:17px;margin:18px 0 8px}
+  .corpo-t strong{color:#fff}
+  .corpo-t code{background:var(--code);padding:2px 6px;border-radius:5px;font-size:.85em;color:#c9b8ff}
+  .corpo-t pre{background:var(--code);border-radius:9px;padding:12px 14px;overflow-x:auto;font-size:12.5px}
+  .corpo-t pre code{background:transparent;padding:0}
+  .corpo-t table{border-collapse:collapse;margin:10px 0;font-size:13.5px;width:100%}
+  .corpo-t th{color:var(--accent2);text-align:left}
+  .corpo-t th,.corpo-t td{border:1px solid var(--border);padding:6px 11px}
+  .corpo-t ul,.corpo-t ol{padding-left:22px}
+  .corpo-t li{margin:6px 0}
+
   /* janelas de código estilo editor */
   .codecard{background:var(--code);border:1px solid var(--border);border-radius:13px;
     margin:14px 0;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35)}
@@ -145,7 +168,7 @@
   <button onclick="navegar(-1)">← Anterior</button>
   <span id="pos"></span>
   <span>
-    <span style="color:var(--muted);font-size:12px;margin-right:12px">clique na página ou <kbd>←</kbd><kbd>→</kbd><kbd>espaço</kbd> · <kbd>N</kbd> notas</span>
+    <span style="color:var(--muted);font-size:12px;margin-right:12px">clique/<kbd>←</kbd><kbd>→</kbd><kbd>espaço</kbd> avança · <kbd>T</kbd> teoria · <kbd>N</kbd> notas</span>
     <button onclick="abrirNotas()" title="Notas do apresentador em outra janela">🗒 Notas</button>
     <button class="prox" onclick="navegar(1)">Próximo →</button>
   </span>
@@ -184,11 +207,17 @@ document.addEventListener('keydown', e=>{
   if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ') { e.preventDefault(); navegar(1); }
   if(e.key==='ArrowLeft'||e.key==='PageUp') navegar(-1);
   if(e.key==='n'||e.key==='N') abrirNotas();
+  if(e.key==='t'||e.key==='T') toggleTeoria();
 });
+
+function toggleTeoria(){
+  const t = document.getElementById('painel-teoria');
+  if(t) t.classList.toggle('aberta');
+}
 
 // clique em qualquer area "passiva" da pagina avanca o slide (estilo apresentacao)
 document.querySelector('main').addEventListener('click', e=>{
-  if(e.target.closest('button, a, .codecard, .acao, .saida, input, textarea, kbd')) return;
+  if(e.target.closest('button, a, .codecard, .acao, .saida, .teoria, input, textarea, kbd')) return;
   if(window.getSelection && String(window.getSelection())) return;  // usuario selecionando texto
   navegar(1);
 });
@@ -221,6 +250,17 @@ function mostrar(i){
       <h2 class="hero">${hero}</h2>
     </div>
     <div class="expl anim" ${d()}>${marked.parse(md)}</div>`;
+
+  if(p.teoria && p.teoria.trim()){
+    html += `<div class="teoria anim" id="painel-teoria" ${d()}>
+      <header onclick="toggleTeoria()">
+        <span class="chev">▶</span>
+        <span class="rot">📚 TEORIA — ENTENDA O CONCEITO</span>
+        <span class="dica-t">clique ou tecle <b>T</b></span>
+      </header>
+      <div class="corpo-t">${marked.parse(p.teoria)}</div>
+    </div>`;
+  }
 
   if(p.tecnologias && p.tecnologias.length){
     html += `<div class="secao anim" ${d()}>TECNOLOGIAS DESTE PASSO</div><div class="techs">`;

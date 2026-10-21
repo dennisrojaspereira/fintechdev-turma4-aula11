@@ -569,5 +569,394 @@ TECNOLOGIAS = {
     ],
 }
 
+# Teoria de cada passo (painel expansivel "📚 Teoria" na tela do publico; tecla T).
+TEORIA = {
+    "intro": """
+### Onde cada coisa mora
+
+**IA ⊃ Machine Learning ⊃ Deep Learning.** IA é o guarda-chuva (qualquer técnica que
+simule comportamento inteligente, até regras `if/else`); **ML** é o subconjunto que
+*aprende dos dados* em vez de ser programado regra a regra; **Deep Learning** usa redes
+neurais profundas; e os **LLMs/difusão** são deep learning **generativo**.
+
+A linha do tempo que esta aula percorre:
+
+| Década | Dominante | Exemplo |
+|--------|-----------|---------|
+| 1990s–2000s | Regras + BI | relatórios, SQL, data warehouse |
+| 2000s–2010s | ML clássico | regressão, árvores, SVM — score de crédito |
+| 2012–2020 | Deep learning | visão (CNNs/YOLO), voz |
+| 2020→ | Transformers/LLMs | GPT, Claude, Qwen — texto e código |
+| 2023→ | **Agentes** | LLM + ferramentas + loop de ação |
+
+**Discriminativo × generativo**, formalmente: o discriminativo aprende **P(rótulo | entrada)**
+("dado o pixel, qual a classe?"); o generativo aprende a **distribuição do próprio dado**
+e amostra dela ("qual o próximo token provável?"). É por isso que um classifica com
+confiança calibrável e o outro *inventa com fluência*.
+""",
+    "era-descrever": """
+### Analytics descritiva e diagnóstica
+
+O modelo de maturidade analítica (popularizado pelo Gartner) tem 4 degraus:
+**descritiva** (o que aconteceu?) → **diagnóstica** (por quê?) → **preditiva** (o que
+vai acontecer?) → **prescritiva** (o que fazer a respeito?). As duas primeiras são
+"não preditivas": **não há modelo aprendendo** — há agregação, filtro e junção de fatos.
+
+Conceitos-chave:
+
+- **OLTP × OLAP:** o banco transacional (OLTP) otimiza escritas pequenas e consistentes
+  (a API Pix); o analítico (OLAP) otimiza varreduras e agregações (o dashboard). Misturar
+  os dois derruba o sistema de pagamento no fechamento do mês.
+- **Event log / auditoria imutável:** em vez de guardar só o estado final, guarda-se a
+  sequência de **eventos** (append-only). O estado é derivável; o inverso não. É a base
+  de event sourcing, da trilha exigida pelo BACEN e da reconciliação.
+- **Reconciliação:** comparar duas fontes independentes do mesmo fato (meu ledger × o
+  do provedor) e explicar toda diferença. É o "teste" desta era: exato, binário, sem
+  probabilidade.
+""",
+    "preditiva": """
+### Aprendizado supervisionado em 5 linhas
+
+O modelo recebe pares **(entrada, rótulo)** — fotos + "tem pessoa/não tem" — e ajusta
+parâmetros para minimizar o erro. Depois é avaliado em dados **que nunca viu**
+(split treino/teste); decorar o treino e falhar no teste é **overfitting**.
+
+### As métricas que importam
+
+Com a **matriz de confusão** (VP, FP, FN, VN):
+
+- **Precision = VP / (VP + FP)** — das que eu disse "pessoa", quantas eram?
+- **Recall = VP / (VP + FN)** — das pessoas reais, quantas eu achei?
+- **F1** = média harmônica das duas. Acurácia engana com classes desbalanceadas
+  (99% dos frames sem fraude ⇒ "nunca é fraude" tem 99% de acurácia e recall 0).
+
+O **limiar de confiança** desliza o equilíbrio: limiar baixo ⇒ recall alto, mais falsos
+positivos; limiar alto ⇒ o contrário. A curva disso é a ROC/PR.
+
+### YOLO por dentro (1 parágrafo)
+
+YOLO = *You Only Look Once*: uma CNN divide a imagem em grade e, em **uma única
+passada**, prevê para cada célula caixas (regressão de coordenadas), classes e
+confiança; o **NMS** (non-maximum suppression) remove caixas sobrepostas usando **IoU**
+(interseção sobre união). Uma passada ⇒ rápido ⇒ tempo real. O "n" de yolov8**n** é
+nano: menos parâmetros, menos precisão, mais velocidade.
+""",
+    "era-gerar": """
+### O que um LLM realmente faz
+
+Um transformer treinado em trilhões de tokens aprende **P(próximo token | contexto)**.
+Gerar texto = amostrar dessa distribuição, token a token. A **temperatura** regula a
+amostragem: 0 ≈ sempre o mais provável (mais estável), alta = mais diversidade.
+
+Consequências diretas:
+
+1. **Alucinação não é bug, é a física do modelo:** ele otimiza *plausibilidade
+   linguística*, não *verdade factual*. Sem evidência no contexto, o token mais provável
+   para "o limite é R$ ___" é um número plausível qualquer.
+2. **Janela de contexto:** o modelo só "sabe", na hora, o que está no prompt (+ pesos
+   congelados do treino). Conhecimento da empresa precisa **entrar pelo contexto** —
+   é exatamente o que o RAG faz no Ato 3.
+3. **Não determinismo:** mesma pergunta pode gerar respostas diferentes (amostragem,
+   batching). Por isso teste de igualdade exata não funciona — precisamos de evals.
+4. **Escala local:** um 3B quantizado (Q4) ocupa ~2 GB e roda numa GTX 1660; um
+   modelo de fronteira não. O trade-off é capacidade de seguir instruções — que vocês
+   vão ver falhar ao vivo no contrato de citação.
+""",
+    "era-agir": """
+### De chatbot a agente
+
+**Agente = LLM + ferramentas + loop.** O padrão clássico é o **ReAct**: o modelo
+alterna *raciocínio* ("preciso rodar os testes") e *ação* (chama a ferramenta
+`run_tests`), observa o resultado e decide o próximo passo — até concluir a tarefa.
+
+Níveis de autonomia (simplificado):
+
+| Nível | Quem decide | Exemplo |
+|-------|-------------|---------|
+| Assistente | humano a cada passo | autocomplete, chat |
+| Copiloto | humano aprova lotes | PR gerado para review |
+| **Agente** | máquina decide, humano nos gates | implementa a feature inteira |
+
+O risco cresce com a autonomia porque **erros compõem**: um agente que erra o passo 2
+constrói os passos 3–20 sobre o erro. Dois antídotos de teoria de controle:
+**limites de ação** (sandbox, permissões, menor privilégio — o que ele *pode* fazer) e
+**funções de verificação externas** (testes, gates — como sabemos que *fez certo*).
+Confiar no agente para se auto-avaliar viola a independência do oráculo — mesmo
+princípio do Testador que não lê o código.
+""",
+    "prd": """
+### Requisitos como contrato
+
+- **Requisito funcional (RF):** o que o sistema *faz* (transferir, rejeitar, consultar).
+- **Não funcional (RNF):** *propriedades* do fazer — desempenho, segurança,
+  **correção sob concorrência**. RNFs são os mais caros de retrofitar e os que agentes
+  mais ignoram, porque raramente aparecem no "exemplo de código" médio do treino.
+- **Discovery:** o processo de achar o que o PRD não diz. A regra de ouro com agentes:
+  **lacuna vira pergunta, não suposição** — uma suposição plausível do modelo é
+  indistinguível de requisito para quem lê o código depois.
+
+**Greenfield × Brownfield:** sem legado, a verdade precisa ser *construída* (PRD, ADRs,
+contratos, baselines); com legado, a verdade é *arqueologia* (código, incidentes,
+comportamento observado) — e legado mente: produção contém bugs normalizados que
+ninguém mais questiona. Em ambos, a disciplina é a mesma: **explicitar a fonte de
+verdade antes de gerar código**.
+
+Por que **dinheiro em centavos (int)**: ponto flutuante representa 0.1 como dízima
+binária — `0.1 + 0.2 ≠ 0.3`. Em dinheiro isso vira centavo sumindo em escala. Inteiros
+na menor unidade (centavos) tornam toda soma exata.
+""",
+    "adr": """
+### Architecture Decision Records
+
+Formato proposto por Michael Nygard (2011): um arquivo curto e **imutável** por decisão
+arquitetural relevante, com **Contexto** (o problema e as forças em jogo), **Decisão**
+(uma frase no presente: "usaremos X"), **Consequências** (o preço, não só o benefício)
+e **Alternativas rejeitadas** (com o porquê — é o que evita reabrir o debate).
+
+Por que isso importa *mais* com agentes:
+
+1. **Contexto é o insumo do agente.** Um ADR de 20 linhas no prompt evita que o
+   implementador "melhore" a arquitetura para um padrão que o time rejeitou.
+2. **Decisão ≠ código.** O código mostra *o que* foi feito; o ADR preserva *por quê* —
+   e o porquê é o que impede a próxima pessoa (ou modelo) de desfazer sem saber.
+3. **Supersessão, não edição:** decisão mudou ⇒ novo ADR marcando o antigo como
+   "substituído". O histórico de decisões é tão auditável quanto o de código.
+""",
+    "sdd": """
+### Specification-Driven Development e a teoria do oráculo
+
+**SDD:** a especificação é um artefato de primeira classe, rastreável (requisito ⇄
+spec ⇄ teste), escrita *antes* da implementação — e, na era dos agentes, ela é
+literalmente o **prompt estruturado** do implementador.
+
+**O problema do oráculo** (teoria de teste): um teste tem duas partes — o *estímulo*
+(entrada) e o **oráculo** (como decidir se a saída está certa). A armadilha com código
+gerado: se o oráculo deriva da implementação ("rodei, deu 42, então espero 42"), teste
+e código erram **juntos**. Oráculo saudável deriva do **requisito**.
+
+**Invariantes** são os oráculos mais fortes: propriedades que valem para *qualquer*
+execução ("dinheiro não é criado nem destruído"), não para um exemplo. É a base do
+property-based testing: em vez de 3 exemplos, uma propriedade × milhares de entradas.
+
+**Determinismo do ambiente de teste:** o provedor simulado responde por regra fixa
+(valor termina em 99 ⇒ timeout) para eliminar *flakiness* — teste intermitente é pior
+que não ter teste, porque ensina o time a ignorar vermelho.
+""",
+    "bdd": """
+### Behavior-Driven Development
+
+Criado por Dan North (2006) como evolução do TDD: descrever comportamento **na língua
+do negócio** para que produto, QA, dev — e agora agentes — leiam **o mesmo contrato**.
+
+A gramática **Given/When/Then** (Dado/Quando/Então) mapeia para o padrão de teste
+*Arrange/Act/Assert*: estado inicial → ação → resultado observável. Cada cenário é
+um exemplo concreto; o conjunto de cenários é a **documentação viva** — "viva" porque
+executa: se a spec muda e o código não, o cenário **quebra**, e vice-versa. Documento
+que não executa envelhece em silêncio.
+
+**Example mapping:** a técnica de descoberta por trás — para cada regra, buscar
+exemplos que a confirmam **e o contraexemplo** que a quebra (o cenário de timeout/
+UNKNOWN nasceu assim). Com agentes, os cenários funcionam como *casos de aceite
+executáveis* do prompt: o implementador termina quando todos passam — critério
+objetivo, não opinião.
+""",
+    "agentes": """
+### Os princípios de segurança por trás das rules
+
+- **Menor privilégio** (Saltzer & Schroeder, 1975): cada agente recebe o mínimo de
+  acesso para a sua tarefa — o Testador não escreve em `src/`, ninguém escreve em
+  `specs/` além do Especificador. Não é desconfiança do modelo: é limitar o **raio de
+  explosão** de qualquer erro, humano ou não.
+- **Separação de deveres:** quem implementa ≠ quem testa ≠ quem aprova. Vem de
+  auditoria financeira; aqui garante a **independência do oráculo** (o Testador que lê
+  a implementação é como auditor que lê a resposta antes de conferir a conta).
+- **Sandbox/devcontainer:** o processo roda num ambiente onde o pior caso é destruir o
+  container, não a máquina. `cap-drop`, `no-new-privileges`, rede restrita.
+
+### git worktree em 3 linhas
+
+Um repositório git pode ter **várias árvores de trabalho** apontando para o mesmo
+`.git`: `git worktree add ../wt-tarefa -b feat/tarefa` cria um diretório com outra
+branch em checkout **simultâneo**. Agentes paralelos ganham isolamento de arquivos sem
+clonar o repo — e a integração continua sendo por merge/PR, onde os gates moram.
+""",
+    "api": """
+### Idempotência, formalmente
+
+Uma operação `f` é **idempotente** quando `f(f(x)) = f(x)` — aplicar duas vezes tem o
+mesmo efeito de aplicar uma. Em HTTP: `GET`, `PUT` e `DELETE` são idempotentes por
+contrato; **`POST` não é** — e criar transferência é POST. A solução da indústria
+(Stripe popularizou): o cliente manda uma **Idempotency-Key**, e o servidor garante
+*no máximo um efeito por chave*, devolvendo a resposta original nas repetições.
+
+Por que o cliente precisa disso: numa falha de rede, ele **não sabe** se o request
+chegou (resposta perdida ≠ request perdido). Sem idempotência, o retry seguro é
+impossível: repetir pode duplicar; não repetir pode perder a operação.
+
+Detalhes de contrato que a spec fixa:
+
+- mesma chave + **mesmo payload** ⇒ 200 com a transferência original;
+- mesma chave + **payload diferente** ⇒ 409 (o cliente tem um bug — não mascarar);
+- códigos de erro **estáveis** (`saldo_insuficiente`) são API: clientes e testes
+  dependem deles programaticamente, mensagens humanas podem mudar.
+""",
+    "unknown": """
+### Timeout não é resposta: o problema dos dois generais
+
+Em sistemas distribuídos, quando a chamada ao provedor estoura o tempo, há **três**
+possibilidades indistinguíveis: o request não chegou, chegou e falhou, ou chegou e
+**funcionou** (a resposta é que se perdeu). É o clássico *Two Generals*: não existe
+protocolo que garanta certeza com canal não confiável.
+
+Consequência: **"exactly-once delivery" é mito.** O que existe é *at-least-once*
+(reenvia até confirmar) **+ idempotência** no receptor = *effectively-once* no efeito.
+É o par retry seguro + Idempotency-Key do passo anterior.
+
+O padrão aqui é o de **saga/reconciliação**: diante da incerteza, (1) não finalize —
+estado `UNKNOWN` explícito; (2) **reserve** o recurso (o débito não se perde nem se
+duplica); (3) um processo assíncrono consulta a fonte da verdade e converge o estado.
+Dualidade com contabilidade: fundos reservados = partidas em trânsito; a reconciliação
+é literalmente a prática contábil de bater razão × extrato, agora automatizada.
+""",
+    "bug": """
+### Race condition e TOCTOU
+
+Uma **condição de corrida** existe quando o resultado depende da ordem de execução de
+threads/processos concorrentes. O padrão específico aqui é **TOCTOU** —
+*Time-Of-Check to Time-Of-Use*: entre **checar** uma condição ("a chave existe?") e
+**usar** o resultado ("então gravo"), o mundo muda. As duas requisições leem "não
+existe" **antes** de qualquer uma gravar — e ambas debitam.
+
+Por que testes comuns não pegam:
+
+1. Teste sequencial nunca abre a janela: uma requisição termina antes da outra começar.
+2. Mesmo testes "paralelos" ingênuos raramente colidem na janela de microssegundos —
+   passam 99 vezes e falham na centésima (flaky ao contrário: verde mentiroso).
+
+O oráculo correto **força** a colisão: `threading.Barrier` solta as 8 threads no mesmo
+instante, e a latência simulada (sleep entre check e act) **alarga a janela** até a
+corrida ser determinística. Técnica geral: não torça para a corrida acontecer —
+**construa-a**.
+
+Nota de realismo: TOCTOU em chave de idempotência é bug recorrente em gateways de
+pagamento reais; o "check" e o "insert" em queries separadas sem transação é a
+assinatura clássica.
+""",
+    "fix": """
+### Exclusão mútua e atomicidade
+
+A correção aplica **exclusão mútua**: checagem + reserva da chave + débito viram uma
+**seção crítica** — ou executa tudo, ou nada, e nunca intercalado. Em memória, um
+`Lock`; em banco, **transação + constraint**:
+
+```sql
+INSERT INTO idempotency (key, transfer_id) VALUES ($1, $2)
+ON CONFLICT (key) DO NOTHING;   -- quem inseriu é o dono; o resto lê o existente
+```
+
+O `UNIQUE` é o lock distribuído que você não precisa escrever: o banco serializa por
+você. É o **I** de ACID (isolamento) fazendo o trabalho — e por isso o lab avisa que o
+lock de processo único não basta com réplicas.
+
+### Gates em camadas (modelo do queijo suíço)
+
+Cada defesa tem furos; a esteira empilha fatias para nenhum furo atravessar tudo:
+**lint** (bugs sintáticos) → **security scan** (padrões perigosos) → **secrets scan**
+(credencial commitada) → **testes de exemplo** (regressões) → **oráculo de
+concorrência** (RNF-01) → **revisão humana** (intenção e contexto). Cobertura mede
+quanto código o teste *executa*, não o que ele *verifica* — por isso 100% de cobertura
+com oráculo fraco é falsa segurança.
+""",
+    "rag": """
+### Embeddings e busca vetorial
+
+Um **embedding** é um vetor denso (768 dims no nomic-embed-text) em que **proximidade
+geométrica ≈ proximidade semântica**: "limite do Pix" e "teto por transação" caem
+perto, apesar de não dividirem palavras. A similaridade usa o **cosseno** do ângulo
+entre vetores (1 = mesma direção). O pgvector guarda esses vetores no Postgres e
+indexa com HNSW/IVFFlat para busca aproximada rápida.
+
+### O pipeline RAG
+
+**Ingestão** (offline): documentos → *chunking* (pedaços por seção — pequenos o
+bastante para serem específicos, grandes o bastante para terem contexto) → embedding
+→ banco vetorial. **Consulta** (online): pergunta → embedding → top-k chunks →
+prompt = instruções + **evidência** + pergunta → LLM.
+
+Por que reduz alucinação: transforma "complete de memória" em **compreensão de texto
+com evidência no contexto** — tarefa em que até modelos pequenos são bons. Mas atenção
+à lição do lab: **recuperar ≠ fundamentar**. O chunk certo no prompt não garante que a
+resposta o usou (q03 contradisse a evidência!) — por isso atribuição de fontes e
+groundedness se mede, não se assume.
+""",
+    "guardrails": """
+### Por que prompt injection existe (e não tem patch)
+
+No transformer, **instrução e dado viajam no mesmo canal**: tudo é token no mesmo
+contexto. "Ignore suas instruções" não é um exploit do software — é **conteúdo
+linguisticamente plausível** que o modelo pode seguir. É o SQL injection dos anos 2000,
+com um agravante: não existe o equivalente perfeito do *prepared statement* para
+linguagem natural.
+
+Logo, a defesa é **em profundidade**, com camadas de naturezas diferentes:
+
+1. **Determinística pré-LLM** (este passo): regex/regras sobre a entrada — custo ~0,
+   recall imperfeito, mas o que ela bloqueia, bloqueia *sempre*.
+2. **Separação de capacidades:** o chatbot **não tem ferramenta de transferir**.
+   Guardrail que só "pede" para o modelo não fazer é política; não dar a ferramenta
+   é **arquitetura**.
+3. **Determinística pós-LLM:** a saída também é inspecionada (CPF, "transferência
+   realizada") — pega o que passou pelas camadas 1 e 2.
+4. **Autorização fora do modelo:** operação financeira exige autenticação forte no
+   sistema do Ato 2 — o LLM nunca está na cadeia de autorização.
+
+Regra de bolso: **o que for inaceitável errar 1 vez em 1.000, não pode depender só
+do modelo.**
+""",
+    "evals": """
+### A teoria de medir um sistema não determinístico
+
+Com saída aberta, não existe `assert resposta == esperado`. A disciplina vira
+**propriedades medidas por réguas diferentes** — e cada régua tem física própria:
+
+| Régua | Mede | Natureza | Papel |
+|-------|------|----------|-------|
+| Checagem determinística | contratos (bloqueou? citou? campo existe?) | exata, binária | **gate** |
+| Heurística textual | presença de termos esperados | proxy barato | gate com threshold |
+| LLM-as-a-Judge | groundedness/relevância | probabilística | **sinal**, nunca gate |
+| Revisão humana | intenção, tom, risco | cara, amostral | árbitro das divergências |
+
+Vieses conhecidos do juiz-LLM (literatura de 2023–24): **posição** (prefere a primeira
+opção), **verbosidade** (nota alta para resposta longa), **auto-preferência** (gosta do
+próprio estilo) e descalibração em modelos pequenos — vocês viram: nota 0 para recusas
+*corretas*, porque "não groundeado" ≠ "errado". Mitigações: rubrica explícita, saída
+estruturada (JSON validado), evidência no prompt, e **nunca** promover o juiz a gate.
+
+**Golden dataset** = o conjunto de casos versionado junto do código. Rodar a cada
+mudança de prompt/modelo transforma "parece melhor" em **diff mensurável** — é o teste
+de regressão da era generativa.
+""",
+    "fim": """
+### A síntese teórica da aula
+
+1. **Hierarquia de validação:** quanto mais aberta a saída, mais indireta a medição —
+   do `assert` exato (era 1) à matriz de confusão (era 2), aos evals multi-régua
+   (era 3), aos oráculos independentes + gates + humano (era 4). O erro de categoria
+   clássico é aplicar a régua de uma era à outra.
+2. **Independência do oráculo:** em toda era, quem verifica não pode derivar de quem
+   produz — auditor ≠ contador, teste ≠ implementação, juiz ≠ gerador. Quando os dois
+   nascem da mesma fonte, erram juntos e em silêncio.
+3. **Automation bias:** humanos tendem a aceitar a saída da máquina conforme ela fica
+   mais fluente — e a fluência dos LLMs é exatamente a variável que mais cresceu.
+   A resposta institucional não é "confie menos", é **estrutura**: gates que não
+   dependem de atenção individual.
+4. **Custo do defeito** (Boehm): o preço de um erro cresce ordens de magnitude de
+   requisito → código → produção. A IA baixou o custo de *gerar* código; o de
+   *corrigir em produção* continua o mesmo — logo o valor relativo de especificar e
+   testar **subiu**.
+""",
+}
+
 for _s in STEPS:
     _s["tecnologias"] = TECNOLOGIAS.get(_s["id"], [])
+    _s["teoria"] = TEORIA.get(_s["id"], "")
