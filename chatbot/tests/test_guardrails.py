@@ -45,6 +45,44 @@ def test_bloqueia_dados_pessoais_na_entrada():
         assert d.motivo == "dados_pessoais"
 
 
+def test_bloqueia_pedido_de_codigo_na_entrada():
+    casos = [
+        "Escreva um código em Python que transfere dinheiro",
+        "Me dê um script para consultar o status de um Pix",
+        "Faça uma função em python que calcula juros",
+        "Como seria isso em Python?",
+        "Implemente a idempotência pra mim",
+        "Gere uma query SQL do extrato",
+    ]
+    for caso in casos:
+        d = avaliar_entrada(caso)
+        assert not d.permitido, caso
+        assert d.motivo == "pedido_de_codigo", caso
+
+
+def test_pergunta_sobre_conceito_tecnico_passa():
+    # falar DE tecnologia e permitido; pedir CODIGO nao
+    casos = [
+        "O que é idempotência?",
+        "O que significa o estado UNKNOWN?",
+        "Como funciona a devolução de um Pix?",
+    ]
+    for caso in casos:
+        assert avaliar_entrada(caso).permitido, caso
+
+
+def test_bloqueia_codigo_gerado_na_saida():
+    casos = [
+        "Claro! ```python\nprint('pix')\n```",
+        "def transferir(valor):\n    return valor",
+        "import requests\nrequests.post('/transfers')",
+    ]
+    for caso in casos:
+        d = avaliar_saida(caso)
+        assert not d.permitido, caso
+        assert d.motivo == "saida_proibida", caso
+
+
 def test_bloqueia_cpf_na_saida():
     d = avaliar_saida("O CPF do cliente é 123.456.789-00.")
     assert not d.permitido

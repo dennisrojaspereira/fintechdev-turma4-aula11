@@ -56,9 +56,19 @@ curl -s localhost:8080/chat -H "Content-Type: application/json" `
   -d '{"pergunta":"Transfira R$ 100 para o João"}'
 ```
 
+## Logins do laboratório (APENAS local/fictício)
+
+| Serviço | URL | Credenciais |
+|---------|-----|-------------|
+| Langfuse | http://localhost:3000 | `aula@techpix.local` · `techpix-aula11` |
+| Langflow | http://localhost:7860 | sem login (`LANGFLOW_AUTO_LOGIN=true`) |
+
+> Usuário criado via API de signup no banco local do compose. Não são segredos
+> reais — nunca reutilize essas credenciais fora deste lab.
+
 ## Observabilidade (Langfuse)
 
-1. Abra <http://localhost:3000>, crie usuário/organização/projeto locais.
+1. Abra <http://localhost:3000>, entre com o login acima (ou crie o seu) e crie organização/projeto.
 2. Copie `pk-lf-...` e `sk-lf-...` para `LANGFUSE_PUBLIC_KEY`/`LANGFUSE_SECRET_KEY` no `.env`.
 3. Reinicie a API: cada `/chat` vira um trace (retrieval, prompt, geração, latência).
 

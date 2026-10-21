@@ -44,6 +44,24 @@ def create_app(responder: Callable[..., dict] | None = None) -> FastAPI:
         """Tela de chat que mostra por onde a informacao passa (pipeline didatico)."""
         return FileResponse(STATIC / "chat.html")
 
+    @app.get("/debug/embedding")
+    def debug_embedding(q: str = "Qual é o limite por transação Pix na TechPix?") -> dict:
+        """Didatico: mostra o vetor de embedding real de uma pergunta (lab local)."""
+        from langchain_ollama import OllamaEmbeddings  # import tardio
+
+        vetor = OllamaEmbeddings(
+            model=settings.embedding_model, base_url=settings.ollama_base_url
+        ).embed_query(q)
+        norma = sum(v * v for v in vetor) ** 0.5
+        return {
+            "pergunta": q,
+            "modelo": settings.embedding_model,
+            "dimensoes": len(vetor),
+            "primeiros_16_valores": [round(v, 4) for v in vetor[:16]],
+            "norma": round(norma, 4),
+            "nota": "É com este vetor que o pgvector busca os trechos mais próximos (cosseno).",
+        }
+
     @app.get("/health")
     def health() -> dict:
         ollama_ok = False
