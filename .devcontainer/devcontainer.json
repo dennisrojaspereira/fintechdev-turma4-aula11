@@ -1,0 +1,20 @@
+{
+  "name": "techpix-lab",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "pip install -r requirements.txt",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "PYTHONPATH": "/workspaces/techpix-ai-engineering/src"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "charliermarsh.ruff"]
+    }
+  },
+  "features": {},
+  "mounts": [],
+  "runArgs": [
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges"
+  ]
+}

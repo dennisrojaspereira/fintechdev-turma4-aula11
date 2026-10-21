@@ -1,0 +1,38 @@
+name: quality-gates
+
+on:
+  pull_request:
+  push:
+    branches: [main, validated, implemented, starter]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Lint (ruff)
+        run: ruff check src tests
+
+      - name: Security scan (bandit)
+        run: bandit -r src -q
+
+      - name: Secrets scanning (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Testes (unitarios + integracao + BDD + concorrencia)
+        run: pytest -v
+
+      - name: Oraculo de idempotencia concorrente (RNF-01)
+        run: pytest tests/test_idempotency_concurrency.py -v

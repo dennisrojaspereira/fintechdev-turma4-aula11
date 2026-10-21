@@ -1,0 +1,20 @@
+[project]
+name = "techpix"
+version = "0.1.0"
+description = "API Pix simulada - laboratorio FintechDev Aula 11 (sem integracao real)"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.bandit]
+skips = []

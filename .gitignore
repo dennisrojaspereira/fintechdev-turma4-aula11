@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+*.log
+evals/results/*.json
+evals/results/*.md
+!evals/results/exemplo-plano-b.md
+chatbot/.venv/
+.DS_Store
