@@ -145,7 +145,7 @@
   <button onclick="navegar(-1)">← Anterior</button>
   <span id="pos"></span>
   <span>
-    <span style="color:var(--muted);font-size:12px;margin-right:12px"><kbd>←</kbd><kbd>→</kbd> navegar · <kbd>N</kbd> notas</span>
+    <span style="color:var(--muted);font-size:12px;margin-right:12px">clique na página ou <kbd>←</kbd><kbd>→</kbd><kbd>espaço</kbd> · <kbd>N</kbd> notas</span>
     <button onclick="abrirNotas()" title="Notas do apresentador em outra janela">🗒 Notas</button>
     <button class="prox" onclick="navegar(1)">Próximo →</button>
   </span>
@@ -174,18 +174,28 @@ async function init(){
     b.onclick = ()=>{ direcao = i>atual?1:-1; mostrar(i); };
     b.id = 'nav'+i; menu.appendChild(b);
   });
-  mostrar(0);
+  // deep-link: /#5 abre direto no passo 5
+  const h = parseInt(location.hash.slice(1));
+  mostrar(!Number.isNaN(h) && h>=1 && h<=passos.length ? h-1 : 0);
 }
 
 function navegar(d){ direcao = d; mostrar(Math.min(Math.max(atual+d,0),passos.length-1)); }
 document.addEventListener('keydown', e=>{
-  if(e.key==='ArrowRight'||e.key==='PageDown') navegar(1);
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ') { e.preventDefault(); navegar(1); }
   if(e.key==='ArrowLeft'||e.key==='PageUp') navegar(-1);
   if(e.key==='n'||e.key==='N') abrirNotas();
 });
 
+// clique em qualquer area "passiva" da pagina avanca o slide (estilo apresentacao)
+document.querySelector('main').addEventListener('click', e=>{
+  if(e.target.closest('button, a, .codecard, .acao, .saida, input, textarea, kbd')) return;
+  if(window.getSelection && String(window.getSelection())) return;  // usuario selecionando texto
+  navegar(1);
+});
+
 function mostrar(i){
   atual = i; sincronizar(i);
+  try { history.replaceState(null,'','#'+(i+1)); } catch(e){}
   const p = passos[i];
   document.querySelectorAll('nav button').forEach((b,j)=>{
     b.classList.toggle('ativo', j===i);
