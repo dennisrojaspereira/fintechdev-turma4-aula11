@@ -126,6 +126,7 @@ fica séria.
 - Nomear o fenômeno: **alucinação** — não é bug do modelo, é a natureza dele: gerar o provável, não o verdadeiro.
 - *Cliffhanger explícito:* **"guardem essa resposta errada. No Ato 3 voltamos com RAG, guardrails e evals para domar exatamente isso."**
 - Trade-offs de rodar local (Ollama, qwen2.5:3b na GTX 1660): custo por token zero, dado não sai da máquina × qualidade menor que API hospedada.
+- **SLM × LLM (teoria, tecla T):** mesma arquitetura, escalas diferentes — o que muda é o que *emerge* (instruções longas, raciocínio, calibração). Nosso 3B é um **SLM**: tudo que ele errar hoje (citação, juiz ruidoso) é característico. Padrão de mercado: **cascata** — SLM nos 80% baratos, LLM nos 20% difíceis. E quanto menor o modelo, mais o sistema em volta (RAG/guardrails/evals) carrega a qualidade.
 - Gancho para a era 4: *"e se, em vez de responder FAQ, essa IA escrever o sistema de pagamento?"*
 """,
         "arquivos": ["chatbot/app/rag.py"],
@@ -587,6 +588,8 @@ TECNOLOGIAS = {
     ],
     "era-gerar": [
         {"icone": "🦙", "nome": "Ollama", "desc": "qwen2.5:3b na GTX 1660"},
+        {"icone": "🐜", "nome": "SLM", "desc": "pequeno, local, privado — frágil em instruções"},
+        {"icone": "🐘", "nome": "LLM", "desc": "fronteira: raciocínio e agentes (teoria: tecla T)"},
         {"icone": "🎲", "nome": "Não determinismo", "desc": "plausível ≠ correto"},
         {"icone": "👻", "nome": "Alucinação", "desc": "a fratura da era 3"},
     ],
@@ -783,6 +786,43 @@ Consequências diretas:
 4. **Escala local:** um 3B quantizado (Q4) ocupa ~2 GB e roda numa GTX 1660; um
    modelo de fronteira não. O trade-off é capacidade de seguir instruções — que vocês
    vão ver falhar ao vivo no contrato de citação.
+
+### SLM × LLM: a mesma física, escalas diferentes
+
+**SLM** (*Small Language Model*, ~0.5B–8B parâmetros) e **LLM** (dezenas a centenas de
+bilhões) são a **mesma arquitetura** (transformer prevendo o próximo token) — o que
+muda com a escala não é "o que ele é", é **o que emerge**: seguir instruções longas,
+raciocínio em múltiplos passos, conhecimento de cauda longa e calibração.
+
+| | **SLM** (ex.: Qwen 3B, Phi, Gemma 2B–9B) | **LLM** (ex.: Claude, GPT, Qwen 72B+) |
+|---|---|---|
+| Parâmetros | ~0.5B–8B (Q4 ⇒ cabe em 2–6 GB) | 30B–1T+ (datacenter/API) |
+| Onde roda | sua GPU/CPU, celular, edge, **offline** | nuvem (ou cluster próprio caro) |
+| Custo por token | ~zero (energia) | pago por uso |
+| Privacidade | dado **não sai da máquina** | depende do contrato/provedor |
+| Latência | previsível, sem rede | rede + fila, mas throughput alto |
+| Segue instruções complexas | frágil (vimos: ignorou o contrato de citação, copiou placeholder) | forte |
+| Raciocínio multi-passo / agentes | limitado | é onde agentes funcionam |
+| Conhecimento factual próprio | raso ⇒ **precisa de RAG** | amplo (mas também alucina) |
+| Como juiz/avaliador | ruidoso e descalibrado (nota 0 em recusa correta) | utilizável com rubrica |
+
+**Regra de decisão** — pense em *tarefa estreita × tarefa aberta*:
+
+```mermaid
+flowchart LR
+  Q{"a tarefa é estreita e<br/>bem especificada?"}
+  Q -->|"sim (classificar, extrair,<br/>FAQ com RAG, roteamento)"| P{"dado sensível /<br/>volume alto / offline?"}
+  P -->|sim| SLM["✅ SLM local<br/>+ RAG + guardrails + evals"]
+  P -->|não| TANTO["SLM ou LLM —<br/>decida por custo"]
+  Q -->|"não (raciocínio longo,<br/>código, agente, juiz)"| LLM["✅ LLM de fronteira<br/>(API)"]
+  SLM -.-> H["híbrido comum:<br/>SLM no fluxo, LLM nos casos difíceis<br/>(cascata/roteador)"]
+  LLM -.-> H
+```
+
+O padrão de mercado é **híbrido em cascata**: o SLM resolve os 80% baratos e um
+roteador escala os 20% difíceis para o LLM — custo de SLM, qualidade de LLM onde
+importa. E a disciplina da aula não muda com o tamanho: **quanto menor o modelo, MAIS
+o sistema em volta (RAG, guardrails, evals) carrega a qualidade** — o Lab 2 é a prova.
 """,
     "era-agir": """
 ### De chatbot a agente
