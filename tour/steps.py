@@ -321,3 +321,86 @@ O que esta esteira demonstrou:
         "acoes": [],
     },
 ]
+
+# Tecnologias destacadas em cada passo (cards animados na tela do publico).
+TECNOLOGIAS = {
+    "intro": [
+        {"icone": "⚡", "nome": "FastAPI", "desc": "API Pix simulada (Lab 1)"},
+        {"icone": "🧪", "nome": "pytest + BDD", "desc": "oráculos e cenários executáveis"},
+        {"icone": "🦙", "nome": "Ollama", "desc": "LLM 100% local (Lab 2)"},
+        {"icone": "🦜", "nome": "LangChain", "desc": "cadeia RAG em código"},
+        {"icone": "🐘", "nome": "pgvector", "desc": "busca vetorial no Postgres"},
+        {"icone": "📊", "nome": "Langfuse", "desc": "traces e evals"},
+        {"icone": "🎨", "nome": "Langflow", "desc": "a mesma cadeia em canvas"},
+        {"icone": "🐳", "nome": "Docker", "desc": "stack local reproduzível"},
+    ],
+    "prd": [
+        {"icone": "📄", "nome": "Docs-as-code", "desc": "PRD versionado junto do código"},
+        {"icone": "🔢", "nome": "Centavos (int)", "desc": "dinheiro nunca em float"},
+        {"icone": "🎯", "nome": "RNF-01", "desc": "correção sob concorrência"},
+    ],
+    "adr": [
+        {"icone": "📐", "nome": "ADR", "desc": "decisão com contexto e consequências"},
+        {"icone": "🧑‍⚖️", "nome": "Aprovação humana", "desc": "dinheiro/segurança não é automático"},
+    ],
+    "sdd": [
+        {"icone": "📋", "nome": "SDD", "desc": "spec rastreável PRD ⇄ teste"},
+        {"icone": "🧭", "nome": "Invariantes", "desc": "oráculos independentes do código"},
+        {"icone": "🎲", "nome": "Provedor determinístico", "desc": "teste sem flakiness"},
+    ],
+    "bdd": [
+        {"icone": "🥒", "nome": "Gherkin", "desc": "comportamento em português"},
+        {"icone": "🧪", "nome": "pytest-bdd", "desc": "cada Então vira assert"},
+    ],
+    "agentes": [
+        {"icone": "🤖", "nome": "Agentes com papéis", "desc": "analista → revisor, limites claros"},
+        {"icone": "🌿", "nome": "git worktrees", "desc": "isolamento por tarefa"},
+        {"icone": "📦", "nome": "devcontainer", "desc": "sandbox com menor privilégio"},
+        {"icone": "🔒", "nome": "Rules", "desc": "restrições que agente não afrouxa"},
+    ],
+    "api": [
+        {"icone": "⚡", "nome": "FastAPI", "desc": "endpoints tipados + OpenAPI"},
+        {"icone": "🛡", "nome": "Pydantic", "desc": "validação na borda"},
+        {"icone": "🔑", "nome": "Idempotency-Key", "desc": "contrato contra duplicidade"},
+    ],
+    "unknown": [
+        {"icone": "🔁", "nome": "Máquina de estados", "desc": "PROCESSING → … → UNKNOWN"},
+        {"icone": "🤝", "nome": "Reconciliação", "desc": "resolve o desconhecido depois"},
+        {"icone": "🏦", "nome": "Reserva de fundos", "desc": "timeout não cria nem destrói dinheiro"},
+    ],
+    "bug": [
+        {"icone": "🧵", "nome": "threading.Barrier", "desc": "corrida determinística no teste"},
+        {"icone": "🌿", "nome": "git worktree", "desc": "branch com bug rodando ao lado"},
+        {"icone": "💣", "nome": "check-then-act", "desc": "o anti-padrão clássico"},
+    ],
+    "fix": [
+        {"icone": "🔐", "nome": "Seção crítica", "desc": "checar + reservar numa operação"},
+        {"icone": "🧹", "nome": "ruff", "desc": "lint / static analysis"},
+        {"icone": "🕵", "nome": "bandit + gitleaks", "desc": "security e secrets no CI"},
+        {"icone": "⚙️", "nome": "GitHub Actions", "desc": "gates bloqueantes no PR"},
+    ],
+    "rag": [
+        {"icone": "🦙", "nome": "Ollama", "desc": "qwen2.5:3b na GTX 1660"},
+        {"icone": "🦜", "nome": "LangChain", "desc": "retriever + prompt + LLM"},
+        {"icone": "🐘", "nome": "pgvector", "desc": "embeddings no Postgres"},
+        {"icone": "📊", "nome": "Langfuse", "desc": "trace de cada resposta"},
+        {"icone": "🎨", "nome": "Langflow", "desc": "mesma cadeia, canvas visual"},
+    ],
+    "guardrails": [
+        {"icone": "🚫", "nome": "Guardrails", "desc": "regex determinístico, pré-LLM"},
+        {"icone": "🧱", "nome": "Entrada E saída", "desc": "injection, PII, 'transferi!'"},
+        {"icone": "⚖️", "nome": "Informar ≠ executar", "desc": "quem transfere é o Lab 1"},
+    ],
+    "evals": [
+        {"icone": "🏆", "nome": "Golden dataset", "desc": "14 casos versionados"},
+        {"icone": "✅", "nome": "Checagem determinística", "desc": "guardrails: 100% ou reprova"},
+        {"icone": "⚖️", "nome": "LLM-as-a-Judge", "desc": "informativo, nunca gate"},
+    ],
+    "fim": [
+        {"icone": "🏭", "nome": "Qualidade é a esteira", "desc": "não o commit"},
+        {"icone": "🧑‍💻", "nome": "Humano no loop", "desc": "ADRs, merges, discovery"},
+    ],
+}
+
+for _s in STEPS:
+    _s["tecnologias"] = TECNOLOGIAS.get(_s["id"], [])
