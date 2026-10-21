@@ -8,5 +8,6 @@ __pycache__/
 evals/results/*.json
 evals/results/*.md
 !evals/results/exemplo-plano-b.md
+!evals/results/evidencia-*.md
 chatbot/.venv/
 .DS_Store

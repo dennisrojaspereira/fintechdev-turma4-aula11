@@ -1,5 +1,15 @@
 # Plano B — demo pré-gravada do Lab 2
 
+> ✅ **A stack completa já foi executada de ponta a ponta em 2026-10-21** nesta
+> máquina (smoke test 5/5, evals aprovados). Evidência real em
+> [`evals/results/evidencia-2026-10-21.md`](../evals/results/evidencia-2026-10-21.md)
+> — destaque para o caso `q03`: o retrieval trouxe o chunk certo (`limites`),
+> mas o Qwen 3B respondeu que o limite "permanece constante" à noite,
+> contradizendo o contexto. Falha de groundedness REAL, capturada pelo eval —
+> use-a na aula no lugar do exemplo fabricado abaixo. Os scores do juiz (3B)
+> saíram ruidosos (4–6 para respostas boas, 0 para recusas corretas): evidência
+> ao vivo de que juiz pequeno é informativo, não gate.
+
 > Use se Ollama/Docker/modelos falharem ao vivo. Todo o conteúdo abaixo foi
 > redigido como **exemplo ilustrativo pré-preparado** do comportamento esperado
 > (marcado como tal — não apresentar como execução ao vivo). Antes da aula,
