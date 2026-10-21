@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/gherkin.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
 <style>
   :root{
     --bg:#0b0e14; --panel:#141824; --panel2:#1b2130; --border:#272e40;
@@ -102,6 +103,11 @@
   .corpo-t ul,.corpo-t ol{padding-left:22px}
   .corpo-t li{margin:6px 0}
 
+  /* diagramas mermaid */
+  .mermaid{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);
+    border-radius:13px;padding:16px;margin:16px 0;display:flex;justify-content:center;overflow-x:auto}
+  .mermaid svg{max-width:100%;height:auto}
+
   /* janelas de código estilo editor */
   .codecard{background:var(--code);border:1px solid var(--border);border-radius:13px;
     margin:14px 0;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35)}
@@ -178,6 +184,39 @@ let passos = [], atual = 0, direcao = 1;
 let canal = null;
 try { canal = new BroadcastChannel('tour'); } catch(e) {}
 
+mermaid.initialize({
+  startOnLoad: false,
+  securityLevel: 'loose',
+  theme: 'dark',
+  themeVariables: {
+    fontFamily: '"Segoe UI", system-ui, sans-serif',
+    fontSize: '14px',
+    primaryColor: '#1d2230', primaryTextColor: '#e9ecf5', primaryBorderColor: '#5b9dff',
+    secondaryColor: '#241d38', tertiaryColor: '#141824',
+    lineColor: '#8c94aa', textColor: '#e9ecf5',
+    actorBkg: '#1d2230', actorBorder: '#5b9dff', actorTextColor: '#e9ecf5',
+    signalColor: '#8c94aa', signalTextColor: '#c8cfe3',
+    noteBkgColor: '#2a2340', noteTextColor: '#e9ecf5', noteBorderColor: '#9d7bff',
+    labelBoxBkgColor: '#1d2230', clusterBkg: '#141824', clusterBorder: '#272e40',
+    mainBkg: '#1d2230', nodeBorder: '#5b9dff', edgeLabelBackground: '#141824'
+  }
+});
+
+// converte blocos ```mermaid visiveis em diagramas renderizados
+async function renderMermaid(root){
+  if(!root) return;
+  const blocos = root.querySelectorAll('code.language-mermaid');
+  const nodes = [];
+  blocos.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'mermaid';
+    div.textContent = c.textContent;
+    (c.closest('pre') || c).replaceWith(div);
+    nodes.push(div);
+  });
+  if(nodes.length){ try{ await mermaid.run({nodes}); }catch(e){ console.warn('mermaid:', e); } }
+}
+
 const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const LINGUAS = {py:'python', yml:'yaml', yaml:'yaml', json:'json', feature:'gherkin',
                  html:'xml', toml:'ini', sql:'sql', ps1:'powershell', sh:'bash'};
@@ -212,7 +251,9 @@ document.addEventListener('keydown', e=>{
 
 function toggleTeoria(){
   const t = document.getElementById('painel-teoria');
-  if(t) t.classList.toggle('aberta');
+  if(!t) return;
+  t.classList.toggle('aberta');
+  if(t.classList.contains('aberta')) renderMermaid(t.querySelector('.corpo-t'));
 }
 
 // clique em qualquer area "passiva" da pagina avanca o slide (estilo apresentacao)
@@ -303,6 +344,7 @@ function mostrar(i){
   const main = document.getElementById('conteudo');
   main.innerHTML = html;
   document.querySelector('main').scrollTop = 0;
+  renderMermaid(main.querySelector('.expl'));   // diagramas visíveis do slide
   if(p.arquivos.length) carregarArquivo(0);  // primeiro arquivo já aberto
 }
 
@@ -322,6 +364,7 @@ async function carregarArquivo(j){
   const ext = card.dataset.ext;
   if(ext==='md'){
     corpo.innerHTML = `<div class="mdview">${marked.parse(dados.conteudo||'')}</div>`;
+    renderMermaid(corpo);
   }else{
     const lang = LINGUAS[ext];
     corpo.innerHTML = `<pre><code class="${lang?('language-'+lang):''}">${esc(dados.conteudo||dados.detail||'')}</code></pre>`;

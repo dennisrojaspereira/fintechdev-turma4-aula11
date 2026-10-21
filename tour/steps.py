@@ -31,6 +31,15 @@ nesta máquina:
 
 A cada era a pergunta muda — e o **jeito de testar** muda junto. O clímax: na era 4,
 a IA escreve o código... e plantamos um bug para descobrir **quem pega**.
+
+```mermaid
+flowchart LR
+  A["📒 Era 1 · Descrever<br/>o que aconteceu?"] --> B["🧍 Era 2 · Prever<br/>o que é isto?"]
+  B --> C["🦙 Era 3 · Gerar<br/>produza algo novo"]
+  C --> D["🤖 Era 4 · Agir<br/>construa o sistema"]
+  D --> P{{"❓ quem valida?"}}
+  P --> L["💣 o bug plantado desta aula"]
+```
 """,
         "notas": """
 - Abrir perguntando: **"quem já recebeu um PR gigante gerado por IA?"** — deixar 2 ou 3 responderem.
@@ -38,7 +47,7 @@ a IA escreve o código... e plantamos um bug para descobrir **quem pega**.
 - Tese que repete a aula inteira: **cada era tem sua pergunta E seu teste**. Errar o teste da era = incidente.
 - Conectar com as perguntas da turma (Matheus: throughput/testes; Renato: autonomia×segurança; Cauã: Greenfield; Cláudio: pipeline BMAD+BDD+SDD) — todas moram na era 4.
 - ⏱ ~5 min. Não detalhar tecnologia aqui; os cards são só um trailer.
-- **Plano de corte se o tempo apertar:** as 3 demos inegociáveis são (1) o bug de idempotência (p.13–14), (2) sem RAG × com RAG (p.4 e 15) e (3) a avaliação contraditória dos evals (p.17). O resto comprime.
+- **Plano de corte se o tempo apertar:** as 3 demos inegociáveis são (1) o bug de idempotência (p.14–15), (2) sem RAG × com RAG (p.4 e 16) e (3) a avaliação contraditória dos evals (p.18). O resto comprime.
 """,
         "arquivos": ["README.md"],
         "acoes": [],
@@ -142,12 +151,22 @@ e arquitetura.
 
 A TechPix — nossa fintech fictícia — foi construída exatamente assim: agentes
 implementaram, a esteira validou. Incluindo um bug que **só o teste certo pega**.
+
+```mermaid
+flowchart LR
+  T["🎯 tarefa"] --> R["🧠 raciocínio"]
+  R --> A["🔧 ação<br/>(editar, rodar teste, git)"]
+  A --> O["👀 observação<br/>(saída do comando)"]
+  O -->|"incompleto"| R
+  O -->|"pronto"| E["📦 entrega + evidências"]
+  E --> H["🧑 gates + revisão humana"]
+```
 """,
         "notas": """
 - Este é o pivô da aula: fim do "tour pelas eras", começo da engenharia. Respirar.
 - Responde o espírito das 4 perguntas da turma: a era 4 não é um produto, é um **modo de produção** — e exige esteira própria.
 - Anunciar o Ato 2: *"vamos percorrer a fábrica: PRD → ADR → spec → BDD → agentes com limites → API → e um bug plantado que 25 testes verdes NÃO pegam."*
-- Dica de ritmo: daqui até o passo 14 é o coração dos 40 min de lab. ⏱
+- Dica de ritmo: daqui até o passo 15 é o coração dos 40 min de lab. ⏱
 """,
         "arquivos": [".agents/orchestration.md"],
         "acoes": [],
@@ -189,7 +208,7 @@ rejeitadas. O ADR-0002 define a solução do bug que vamos plantar: idempotênci
 - ADR que afeta dinheiro/segurança exige **aprovação humana** antes do agente implementar.
 - O ADR é o que faz um agente (ou dev) novo entender o "porquê" em 2 minutos — contexto barato para o próximo prompt.
 - Abrir o ADR-0002 e ler só a frase da decisão: checagem + reserva **na mesma operação crítica**.
-- ADR-0003 (UNKNOWN): plantar a semente — "timeout não é sucesso nem falha" — volta no passo 12.
+- ADR-0003 (UNKNOWN): plantar a semente — "timeout não é sucesso nem falha" — volta no passo 13.
 """,
         "arquivos": ["docs/adr/0002-idempotencia-atomica.md", "docs/adr/0003-estados-e-reconciliacao.md"],
         "acoes": [],
@@ -245,6 +264,16 @@ cenário quebra — a documentação não consegue mentir.
 - **Agentes** = papéis com entrada/saída/ferramentas delimitadas — o **Testador não lê o código**,
   só o PRD/spec, para os oráculos serem independentes.
 - **Orquestração** = worktrees isoladas, contratos read-only, integração via PR.
+
+```mermaid
+flowchart LR
+  AN["Analista"] --> AR["Arquiteto"] --> ES["Especificador"]
+  ES --> IM["Implementador<br/>(worktree A)"]
+  ES --> TE["Testador<br/>(worktree B, não lê o código)"]
+  IM --> PR["PR + quality gates"]
+  TE --> PR
+  PR --> RE["Revisor"] --> HU["🧑 humano: merge"]
+```
 """,
         "notas": """
 - Responde o **Renato** (autonomia × segurança): pré-aprovar operações seguras (testes, lint, leitura), exigir humano para destrutivas/segredos/deploy/merge — **nunca** bypass irrestrito.
@@ -257,8 +286,46 @@ cenário quebra — a documentação não consegue mentir.
         "acoes": [],
     },
     {
+        "id": "arquitetura",
+        "titulo": "11. Pergunta da turma: e a Clean Architecture?",
+        "explicacao": """
+## "A arquitetura limpa dificulta para a IA — ela se perde e gasta tokens. Qual usar?"
+
+O diagnóstico está certo, mas o culpado não é a Clean Architecture — é a **cerimônia**:
+indireção especulativa. Cada salto (interface → implementação → factory → camada →
+mapper) é um arquivo a mais que o agente precisa **carregar no contexto**. Humanos
+pagam em cliques; agentes pagam em **tokens e erros de navegação**.
+
+```mermaid
+flowchart LR
+  subgraph CAM["❌ camadas: 1 feature em 6 arquivos"]
+    C1["controller"] --> C2["iservice"] --> C3["service"] --> C4["irepo"] --> C5["repo"] --> C6["mapper/dto"]
+  end
+  subgraph FAT["✅ fatia vertical: tudo junto"]
+    F1["transfers/api.py"] --> F2["transfers/service.py"] --> F3["transfers/store.py"]
+    F4["transfers/test_transfers.py"]
+  end
+```
+
+**Receita para projeto novo:** monólito modular com **fatias verticais** + núcleo de
+domínio puro — o *espírito* da Clean Architecture (domínio no centro, I/O na borda)
+com a *forma* mais plana possível. **Este repositório é o exemplo:** 6 arquivos planos
+que gritam o domínio, construídos por agentes sem se perder.
+""",
+        "notas": """
+- Validar a dor: *"vocês estão certos — o agente se perde mesmo. Mas separem princípio de cerimônia."*
+- Os 6 critérios AI-friendly (na página aberta abaixo): fatias verticais, screaming architecture (`transfers/`, nunca `utils/impl/`), indireção só com 2ª implementação, convenção previsível (teste do lado, sem barrel files), **CLAUDE.md como GPS**, feedback loop rápido.
+- Fórmula para fixar: custo p/ agente ≈ nº de arquivos para entender 1 comportamento × tamanho. Otimizem isso.
+- Skills recomendadas: `/init` para gerar o CLAUDE.md; rules e skills de projeto (mostrar `.agents/` deste repo); subagentes com papéis; worktrees.
+- Regra de bolso de fechamento: *"se um estagiário acha o arquivo certo em 30 s pelos nomes de pasta, o agente também acha."*
+- Microserviços/CQRS/event sourcing: quando o problema pedir — evolução, não ponto de partida. Complexidade especulativa custa dobrado: para criar e em tokens para sempre.
+""",
+        "arquivos": ["docs/arquitetura-para-agentes.md"],
+        "acoes": [],
+    },
+    {
         "id": "api",
-        "titulo": "11. A API que os agentes construíram",
+        "titulo": "12. A API que os agentes construíram",
         "explicacao": """
 ## Transferência, idempotência e estados — em requisições reais
 
@@ -279,7 +346,7 @@ conflito de payload (409).
     },
     {
         "id": "unknown",
-        "titulo": "12. Timeout, UNKNOWN e reconciliação",
+        "titulo": "13. Timeout, UNKNOWN e reconciliação",
         "explicacao": """
 ## O estado mais importante de um sistema de pagamento
 
@@ -287,6 +354,16 @@ Quando o provedor não responde, **não sabemos** se liquidou. Estornar pode ger
 duplo; confirmar pode creditar sem liquidação. Resposta certa: estado **UNKNOWN**,
 fundos **reservados**, e **reconciliação** depois (ADR-0003). O retry do cliente com a
 mesma chave é seguro: retorna a transferência existente.
+
+```mermaid
+stateDiagram-v2
+  [*] --> PROCESSING: POST (fundos reservados)
+  PROCESSING --> COMPLETED: provedor confirma ✅
+  PROCESSING --> FAILED: rejeitada (estorno)
+  PROCESSING --> UNKNOWN: ⏱ timeout (reserva mantida)
+  UNKNOWN --> COMPLETED: reconciliação confirma
+  UNKNOWN --> FAILED: reconciliação nega (estorno)
+```
 """,
         "notas": """
 - Perguntar antes de clicar: *"timeout do provedor: vocês estornam ou confirmam?"* — deixar errarem; a resposta é **nenhum dos dois**.
@@ -302,7 +379,7 @@ mesma chave é seguro: retorna a transferência existente.
     },
     {
         "id": "bug",
-        "titulo": "13. O bug: check-then-act 💣",
+        "titulo": "14. O bug: check-then-act 💣",
         "explicacao": """
 ## Quem testa o código que a IA escreve?
 
@@ -329,7 +406,7 @@ mesma chave, barreira de sincronização ⇒ exatamente 1 débito.
     },
     {
         "id": "fix",
-        "titulo": "14. A correção e os quality gates",
+        "titulo": "15. A correção e os quality gates",
         "explicacao": """
 ## Reserva atômica + gates verdes
 
@@ -353,7 +430,7 @@ construção. Em produção: transação + `UNIQUE(idempotency_key)`.
     # ================================================================ ATO 3
     {
         "id": "rag",
-        "titulo": "15. Ato 3 · RAG — ancorando a era 3",
+        "titulo": "16. Ato 3 · RAG — ancorando a era 3",
         "explicacao": """
 ## A resposta para a alucinação do passo 4
 
@@ -363,6 +440,15 @@ o retriever busca os trechos relevantes do FAQ no **pgvector** e o LLM responde
 
 Spec → implementação → teste: para o chatbot, a "spec" é a base de conhecimento, e
 a resposta certa aponta a evidência.
+
+```mermaid
+flowchart LR
+  subgraph ING["ingestão (offline)"]
+    F["FAQ .md"] --> CH["chunks por seção"] --> E1["embeddings"] --> V[("pgvector")]
+  end
+  Q["pergunta"] --> E2["embedding"] --> V
+  V --> K["top-4 trechos"] --> P["prompt com<br/>evidência"] --> LLM["Ollama<br/>qwen2.5:3b"] --> R["resposta +<br/>fontes utilizadas"]
+```
 """,
         "notas": """
 - Callback explícito: *"lembram do chute do passo 4? Mesma pergunta, agora com RAG."* Rodar e comparar: R$ 5.000 citando `[limites]`.
@@ -378,7 +464,7 @@ a resposta certa aponta a evidência.
     },
     {
         "id": "guardrails",
-        "titulo": "16. Guardrails determinísticos",
+        "titulo": "17. Guardrails determinísticos",
         "explicacao": """
 ## Regra financeira crítica não se negocia com o modelo
 
@@ -386,6 +472,16 @@ Prompt injection, pedido de dados pessoais e **ordens de transferência** são b
 por regras determinísticas **antes** do LLM — repare no tempo: ~0 s, o modelo nem é
 chamado. O bot informa; quem executa é o sistema do Ato 2, com autenticação e
 idempotência.
+
+```mermaid
+flowchart LR
+  U["entrada do usuário"] --> GE{"guardrail<br/>de entrada"}
+  GE -->|"injection / PII /<br/>ordem de transferência"| B1["🚫 bloqueio ~0s<br/>(LLM nem é chamado)"]
+  GE -->|ok| LLM["LLM + RAG"]
+  LLM --> GS{"guardrail<br/>de saída"}
+  GS -->|"CPF / segredo /<br/>'transferência realizada'"| B2["🚫 bloqueio"]
+  GS -->|ok| R["resposta"]
+```
 """,
         "notas": """
 - Rodar os dois bloqueios e apontar `"modo": "guardrail"` e o tempo ~0 s: **o modelo nem foi chamado**.
@@ -402,7 +498,7 @@ idempotência.
     },
     {
         "id": "evals",
-        "titulo": "17. Evals — o Gherkin do chatbot",
+        "titulo": "18. Evals — o Gherkin do chatbot",
         "explicacao": """
 ## Três réguas diferentes — nenhum número isolado é "qualidade"
 
@@ -434,7 +530,7 @@ propriedades diferentes** — divergência não vira média, vira revisão human
     # ============================================================ FECHAMENTO
     {
         "id": "fim",
-        "titulo": "18. Fechamento — cada era, seu teste",
+        "titulo": "19. Fechamento — cada era, seu teste",
         "explicacao": """
 ## IA acelera a implementação. Não transfere a responsabilidade.
 
@@ -453,7 +549,7 @@ humanas obrigatórias — **qualidade é propriedade da esteira, não do commit*
 """,
         "notas": """
 - Fechar respondendo nominalmente as 4 perguntas da turma (Matheus, Renato, Cauã, Cláudio) em 1 frase cada — tudo foi demonstrado ao vivo.
-- Reprisar a tabela apontando as demos: auditoria (p.2), YOLO/frisbee (p.3), chute vs RAG (p.4 e 15), bug RNF-01 (p.13).
+- Reprisar a tabela apontando as demos: auditoria (p.2), YOLO/frisbee (p.3), chute vs RAG (p.4 e 16), bug RNF-01 (p.14).
 - Perguntas de discussão (escolher 2):
   - *Onde a automação deve parar para uma decisão humana no contexto de vocês?*
   - *Qual é a "chave de idempotência" do processo de vocês — o invariante que ninguém testou ainda?*
@@ -522,6 +618,12 @@ TECNOLOGIAS = {
         {"icone": "🌿", "nome": "git worktrees", "desc": "isolamento por tarefa"},
         {"icone": "📦", "nome": "devcontainer", "desc": "sandbox com menor privilégio"},
         {"icone": "🔒", "nome": "Rules", "desc": "restrições que agente não afrouxa"},
+    ],
+    "arquitetura": [
+        {"icone": "🍰", "nome": "Fatias verticais", "desc": "tudo da feature mora junto"},
+        {"icone": "📣", "nome": "Screaming arch", "desc": "pastas gritam o domínio"},
+        {"icone": "🗺", "nome": "CLAUDE.md", "desc": "o GPS do agente no repo"},
+        {"icone": "✂️", "nome": "YAGNI", "desc": "indireção só com 2ª implementação"},
     ],
     "api": [
         {"icone": "⚡", "nome": "FastAPI", "desc": "endpoints tipados + OpenAPI"},
@@ -640,6 +742,16 @@ passada**, prevê para cada célula caixas (regressão de coordenadas), classes 
 confiança; o **NMS** (non-maximum suppression) remove caixas sobrepostas usando **IoU**
 (interseção sobre união). Uma passada ⇒ rápido ⇒ tempo real. O "n" de yolov8**n** é
 nano: menos parâmetros, menos precisão, mais velocidade.
+
+```mermaid
+flowchart LR
+  I["🖼 imagem"] --> C["CNN<br/>(uma passada)"]
+  C --> G["grade: caixas +<br/>classes + confiança"]
+  G --> N["NMS<br/>(remove sobrepostas por IoU)"]
+  N --> L{"person ≥ limiar?"}
+  L -->|sim| S["✅ PESSOA DETECTADA"]
+  L -->|não| X["🚫 sem pessoa"]
+```
 """,
     "era-gerar": """
 ### O que um LLM realmente faz
@@ -647,6 +759,16 @@ nano: menos parâmetros, menos precisão, mais velocidade.
 Um transformer treinado em trilhões de tokens aprende **P(próximo token | contexto)**.
 Gerar texto = amostrar dessa distribuição, token a token. A **temperatura** regula a
 amostragem: 0 ≈ sempre o mais provável (mais estável), alta = mais diversidade.
+
+```mermaid
+flowchart LR
+  P["contexto<br/>(prompt + já gerado)"] --> M["transformer"]
+  M --> D["P(próximo token)"]
+  D --> A["amostragem<br/>(temperatura)"]
+  A --> T["token"]
+  T -->|"anexa ao contexto"| P
+  T --> F["texto final"]
+```
 
 Consequências diretas:
 
@@ -741,6 +863,16 @@ property-based testing: em vez de 3 exemplos, uma propriedade × milhares de ent
 **Determinismo do ambiente de teste:** o provedor simulado responde por regra fixa
 (valor termina em 99 ⇒ timeout) para eliminar *flakiness* — teste intermitente é pior
 que não ter teste, porque ensina o time a ignorar vermelho.
+
+```mermaid
+flowchart LR
+  PRD["PRD<br/>(RF / RNF)"] --> SPEC["Spec<br/>(casos + invariantes)"]
+  SPEC --> BDD["Gherkin<br/>executável"]
+  SPEC --> ORA["testes / oráculos<br/>independentes"]
+  BDD --> CI["gates no CI"]
+  ORA --> CI
+  CI --> H["🧑 revisão humana"]
+```
 """,
     "bdd": """
 ### Behavior-Driven Development
@@ -780,6 +912,33 @@ Um repositório git pode ter **várias árvores de trabalho** apontando para o m
 branch em checkout **simultâneo**. Agentes paralelos ganham isolamento de arquivos sem
 clonar o repo — e a integração continua sendo por merge/PR, onde os gates moram.
 """,
+    "arquitetura": """
+### O custo de contexto: a métrica invisível da arquitetura
+
+Um agente entende o código **carregando arquivos no contexto**. O custo de uma tarefa
+é proporcional a quantos arquivos (e saltos de indireção) são necessários para
+entender **um** comportamento. Arquitetura em camadas espalha cada feature por N
+camadas; fatia vertical concentra. Para humanos a diferença é ergonomia; para agentes
+é **tokens, latência e taxa de erro de navegação**.
+
+**O que a Clean Architecture realmente prescreve** (e continua valendo): a **regra da
+dependência** — código de domínio não conhece banco, HTTP nem framework; dependências
+apontam para dentro. Isso cabe em 3 arquivos planos (`api` → `service` → `store`),
+como neste repo. **O que ela não prescreve** (e viram cerimônia): uma interface por
+classe, DTOs e mappers entre todas as camadas, factories para objetos únicos.
+
+**Vertical Slice Architecture** (Jimmy Bogard): organizar por caso de uso/feature;
+cada fatia decide internamente sua sofisticação — fatia simples fica simples, a
+complexa ganha camadas *dentro dela*. **Screaming Architecture** (Uncle Bob, ironia:
+o mesmo autor): a estrutura de pastas deve gritar o que o sistema *faz*, não qual
+framework usa — princípio que ficou MAIS importante com agentes, porque navegação por
+nome é como eles exploram.
+
+Com IA, dois custos mudaram de preço: **escrever código ficou barato** (refatorar para
+extrair abstração quando precisar custa pouco) e **carregar contexto ficou caro**
+(cada indireção cobra em toda tarefa futura). A conclusão inverte o hábito: comece
+plano, extraia sob demanda — o oposto de "deixar os pontos de extensão prontos".
+""",
     "api": """
 ### Idempotência, formalmente
 
@@ -792,6 +951,16 @@ contrato; **`POST` não é** — e criar transferência é POST. A solução da 
 Por que o cliente precisa disso: numa falha de rede, ele **não sabe** se o request
 chegou (resposta perdida ≠ request perdido). Sem idempotência, o retry seguro é
 impossível: repetir pode duplicar; não repetir pode perder a operação.
+
+```mermaid
+sequenceDiagram
+  participant C as Cliente
+  participant A as API TechPix
+  C->>A: POST /transfers (Idempotency-Key: K)
+  Note over C,A: 💥 resposta se perde na rede
+  C->>A: retry — mesmo POST, mesma chave K
+  A-->>C: 200 transferência ORIGINAL (nenhum débito novo)
+```
 
 Detalhes de contrato que a spec fixa:
 
@@ -838,6 +1007,19 @@ instante, e a latência simulada (sleep entre check e act) **alarga a janela** a
 corrida ser determinística. Técnica geral: não torça para a corrida acontecer —
 **construa-a**.
 
+```mermaid
+sequenceDiagram
+  participant R1 as Requisição 1
+  participant S as Store
+  participant R2 as Requisição 2
+  R1->>S: chave K existe? → não
+  R2->>S: chave K existe? → não
+  Note over R1,R2: ⚠️ janela TOCTOU — as duas passaram na checagem
+  R1->>S: debita + grava K
+  R2->>S: debita + grava K
+  Note over S: 💸 débito duplo (RNF-01 violado)
+```
+
 Nota de realismo: TOCTOU em chave de idempotência é bug recorrente em gateways de
 pagamento reais; o "check" e o "insert" em queries separadas sem transação é a
 assinatura clássica.
@@ -866,6 +1048,12 @@ Cada defesa tem furos; a esteira empilha fatias para nenhum furo atravessar tudo
 concorrência** (RNF-01) → **revisão humana** (intenção e contexto). Cobertura mede
 quanto código o teste *executa*, não o que ele *verifica* — por isso 100% de cobertura
 com oráculo fraco é falsa segurança.
+
+```mermaid
+flowchart LR
+  C["commit do agente"] --> L["ruff<br/>lint"] --> B["bandit<br/>security"] --> G["gitleaks<br/>secrets"]
+  G --> T["pytest + BDD<br/>26 testes"] --> K["oráculo de<br/>concorrência"] --> H["🧑 revisão<br/>humana"] --> M["merge"]
+```
 """,
     "rag": """
 ### Embeddings e busca vetorial
@@ -935,6 +1123,18 @@ estruturada (JSON validado), evidência no prompt, e **nunca** promover o juiz a
 **Golden dataset** = o conjunto de casos versionado junto do código. Rodar a cada
 mudança de prompt/modelo transforma "parece melhor" em **diff mensurável** — é o teste
 de regressão da era generativa.
+
+```mermaid
+flowchart LR
+  D["golden dataset<br/>14 casos"] --> API["/chat"]
+  API --> C1{"checagens<br/>determinísticas"}
+  C1 -->|"guardrail falhou"| REP["❌ gate reprova"]
+  C1 -->|ok| H2["heurísticas<br/>de texto"]
+  API --> J["juiz LLM<br/>(trechos + JSON)"]
+  H2 --> REL["relatório:<br/>3 réguas separadas"]
+  J --> REL
+  REL --> HU["🧑 divergências →<br/>revisão humana"]
+```
 """,
     "fim": """
 ### A síntese teórica da aula
