@@ -1,0 +1,12 @@
+[project]
+name = "techpix-chatbot"
+version = "0.1.0"
+description = "TechPix AI Assistant (Lab 2) - RAG local com Ollama. Dados ficticios."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100

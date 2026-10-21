@@ -1,0 +1,117 @@
+{
+  "name": "TechPix RAG (equivalente a chatbot/app/rag.py)",
+  "description": "Chat Input -> PGVector (busca, nomic-embed-text) -> Prompt com contexto -> Ollama qwen2.5:3b-instruct -> Chat Output. Dados ficticios TechPix.",
+  "data": {
+    "nodes": [
+      {
+        "id": "ChatInput-tpx1",
+        "type": "genericNode",
+        "position": { "x": 0, "y": 200 },
+        "data": {
+          "type": "ChatInput",
+          "node": {
+            "display_name": "Pergunta do usuário",
+            "template": { "input_value": { "type": "str", "value": "O que é o Pix?" } }
+          }
+        }
+      },
+      {
+        "id": "OllamaEmbeddings-tpx1",
+        "type": "genericNode",
+        "position": { "x": 0, "y": 500 },
+        "data": {
+          "type": "OllamaEmbeddings",
+          "node": {
+            "display_name": "Embeddings locais",
+            "template": {
+              "model_name": { "type": "str", "value": "nomic-embed-text" },
+              "base_url": { "type": "str", "value": "http://host.docker.internal:11434" }
+            }
+          }
+        }
+      },
+      {
+        "id": "PGVector-tpx1",
+        "type": "genericNode",
+        "position": { "x": 350, "y": 400 },
+        "data": {
+          "type": "PGVectorStore",
+          "node": {
+            "display_name": "Busca pgvector (techpix_faq)",
+            "template": {
+              "pg_server_url": {
+                "type": "str",
+                "value": "postgresql+psycopg://techpix:techpix-local-dev@postgres:5432/techpix"
+              },
+              "collection_name": { "type": "str", "value": "techpix_faq" },
+              "number_of_results": { "type": "int", "value": 4 }
+            }
+          }
+        }
+      },
+      {
+        "id": "ParseData-tpx1",
+        "type": "genericNode",
+        "position": { "x": 700, "y": 400 },
+        "data": {
+          "type": "ParseData",
+          "node": {
+            "display_name": "Documentos -> contexto",
+            "template": { "template": { "type": "str", "value": "[{fonte}]\n{text}" } }
+          }
+        }
+      },
+      {
+        "id": "Prompt-tpx1",
+        "type": "genericNode",
+        "position": { "x": 1050, "y": 200 },
+        "data": {
+          "type": "Prompt",
+          "node": {
+            "display_name": "Prompt RAG TechPix",
+            "template": {
+              "template": {
+                "type": "prompt",
+                "value": "Você é o assistente informativo da TechPix, uma fintech FICTÍCIA de laboratório. Responda em português, em até 5 frases, APENAS com base no CONTEXTO abaixo. Cite as fontes usadas no formato [nome-da-fonte]. Se o contexto não contém a resposta, diga explicitamente que não há essa informação na base de conhecimento e não invente. Você nunca executa transferências nem acessa dados de contas.\n\nCONTEXTO:\n{contexto}\n\nPERGUNTA: {pergunta}"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "Ollama-tpx1",
+        "type": "genericNode",
+        "position": { "x": 1400, "y": 200 },
+        "data": {
+          "type": "OllamaModel",
+          "node": {
+            "display_name": "LLM local",
+            "template": {
+              "model_name": { "type": "str", "value": "qwen2.5:3b-instruct" },
+              "base_url": { "type": "str", "value": "http://host.docker.internal:11434" },
+              "temperature": { "type": "float", "value": 0.1 }
+            }
+          }
+        }
+      },
+      {
+        "id": "ChatOutput-tpx1",
+        "type": "genericNode",
+        "position": { "x": 1750, "y": 200 },
+        "data": {
+          "type": "ChatOutput",
+          "node": { "display_name": "Resposta", "template": {} }
+        }
+      }
+    ],
+    "edges": [
+      { "source": "OllamaEmbeddings-tpx1", "target": "PGVector-tpx1" },
+      { "source": "ChatInput-tpx1", "target": "PGVector-tpx1" },
+      { "source": "PGVector-tpx1", "target": "ParseData-tpx1" },
+      { "source": "ParseData-tpx1", "target": "Prompt-tpx1", "targetHandle": "contexto" },
+      { "source": "ChatInput-tpx1", "target": "Prompt-tpx1", "targetHandle": "pergunta" },
+      { "source": "Prompt-tpx1", "target": "Ollama-tpx1" },
+      { "source": "Ollama-tpx1", "target": "ChatOutput-tpx1" }
+    ]
+  }
+}
