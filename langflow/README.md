@@ -1,38 +1,34 @@
-# Fluxo Langflow equivalente à cadeia Python
+# Fluxo Langflow — TechPix RAG (visual)
 
-O arquivo `techpix_rag_flow.json` descreve o fluxo RAG equivalente ao de
-`chatbot/app/rag.py`, para importar no Langflow (http://localhost:7860 →
-**Import Flow**).
+## Onde ver na aula
 
-> ✅ **Importação verificada em 2026-10-21 no Langflow 1.12.7** (via
-> `POST /api/v1/flows/`, 7 nós aceitos). ⚠️ Os templates dos nós são
-> simplificados: antes de executar, abra o fluxo e confira/religue as conexões
-> e credenciais no canvas — ou reconstrua em ~3 minutos com o passo a passo
-> abaixo (é inclusive um bom momento da demo: mostra que **canvas visual e
-> código são duas interfaces para a mesma cadeia**, não substitutos diretos).
-> O formato de export muda entre versões do Langflow.
+1. Abra **http://localhost:7860** (sem login — auto-login ativo).
+2. Na página inicial, entre na pasta/projeto **"Starter Project"** (menu lateral).
+3. Abra o fluxo **"TechPix RAG (visual)"** — canvas com ChatInput → Knowledge
+   (retrieval) → Prompt → Agent/LLM → ChatOutput.
+4. Use o **Playground** (botão no topo) para conversar dentro do próprio Langflow.
 
-## Reconstrução manual (3 min)
+> ⚠️ O Langflow **não** recebe as perguntas do chat da porta 8080 — ele é um
+> ambiente paralelo de desenvolvimento visual. O caminho de "produção" é
+> chat → FastAPI → LangChain → pgvector/Ollama (traces no Langfuse). Essa
+> separação é proposital e vale uma fala na aula: *canvas é interface de
+> desenvolvimento, não um proxy.*
 
-1. **Chat Input** — entrada do usuário.
-2. **Ollama Embeddings** — model `nomic-embed-text`, base URL
-   `http://host.docker.internal:11434` (Langflow roda em container; o Ollama está no host).
-3. **PGVector** (Vector Store, modo busca) — connection string
-   `postgresql+psycopg://techpix:techpix-local-dev@postgres:5432/techpix`,
-   collection `techpix_faq`, ligado ao Embeddings; entrada de busca vem do Chat Input.
-4. **Parser / Combine Text** — junta os documentos recuperados em um texto `{contexto}`.
-5. **Prompt** — cole o template do system prompt de `chatbot/app/rag.py`
-   (responder só com base no contexto, citar fontes, não executar operações),
-   com variáveis `{contexto}` e `{pergunta}`.
-6. **Ollama** (LLM) — model `qwen2.5:3b-instruct`, base URL
-   `http://host.docker.internal:11434`, temperature `0.1`.
-7. **Chat Output** — resposta final.
+## Sobre este fluxo
 
-Ligações: Chat Input → PGVector(busca) e Prompt(`pergunta`); PGVector → Parser →
-Prompt(`contexto`); Prompt → Ollama → Chat Output.
+- `techpix_rag_flow.json` é o **export real** (importação verificada no Langflow
+  1.12.7): clonado do template oficial **Vector Store RAG** e renomeado, por isso
+  renderiza e executa. Importe por **Import Flow** se precisar recriar.
+- Os componentes padrão do template usam provedores hospedados (ex.: OpenAI).
+  Para rodar **100% local**, troque no canvas: modelo → **Ollama**
+  (`qwen2.5:3b-instruct`, base URL `http://host.docker.internal:11434`),
+  embeddings → **Ollama Embeddings** (`nomic-embed-text`) e o vector store →
+  **PGVector** (`postgresql+psycopg://techpix:techpix-local-dev@postgres:5432/techpix`,
+  coleção `techpix_faq`). São ~3 minutos de demo — e mostram que canvas e
+  código são **duas interfaces para a mesma cadeia**.
 
 ## O que mostrar na aula
 
-- A mesma pergunta nos dois lugares (código via `/chat`, canvas via Playground).
-- Onde cada parâmetro (k do retriever, temperature, modelo) aparece em cada interface.
+- A mesma pergunta nos dois lugares: chat da porta 8080 (código) × Playground (canvas).
+- Onde cada parâmetro (k do retriever, temperature, modelo) mora em cada interface.
 - O que o canvas **não** dá de graça: guardrails, testes, CI — continuam sendo engenharia.
