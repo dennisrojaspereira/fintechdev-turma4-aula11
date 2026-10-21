@@ -21,16 +21,7 @@ STEPS = [
         "explicacao": """
 ## A IA está produzindo mais código. Estamos produzindo mais qualidade?
 
-Esta aula é uma história em **quatro eras da IA** — e vamos visitar todas ao vivo,
-nesta máquina:
-
-1. **Descrever** — dados que contam o que aconteceu (extrato, auditoria).
-2. **Prever** — modelos que classificam e antecipam (fraude, KYC com visão).
-3. **Gerar** — modelos que produzem texto, código, respostas.
-4. **Agir** — agentes que usam tudo isso para **escrever o software**.
-
-A cada era a pergunta muda — e o **jeito de testar** muda junto. O clímax: na era 4,
-a IA escreve o código... e plantamos um bug para descobrir **quem pega**.
+Uma história em **quatro eras** — todas demonstradas **ao vivo, nesta máquina**.
 
 ```mermaid
 flowchart LR
@@ -40,6 +31,8 @@ flowchart LR
   D --> P{{"❓ quem valida?"}}
   P --> L["💣 o bug plantado desta aula"]
 ```
+
+A cada era, a pergunta muda — e o **jeito de testar** muda junto.
 """,
         "notas": """
 - Abrir perguntando: **"quem já recebeu um PR gigante gerado por IA?"** — deixar 2 ou 3 responderem.
@@ -58,16 +51,15 @@ flowchart LR
         "explicacao": """
 ## Análise NÃO preditiva: o que aconteceu, e por quê
 
-Antes de qualquer "inteligência": **dados exatos**. Extrato, trilha de auditoria,
-dashboards, agregações. Nenhuma previsão — a verdade é o próprio dado, e o teste é
-**reconciliação** (os números batem?).
+Antes de qualquer "inteligência": **fatos exatos** — extrato, auditoria, dashboards.
 
-É a fundação de tudo: sem fatos confiáveis, as próximas eras constroem sobre areia.
-A demo roda transferências reais na API TechPix e mostra a **trilha de auditoria
-imutável** + a análise descritiva (volume, contagens) derivada dela.
+- A verdade é **o próprio dado**. Nenhuma previsão, nenhum modelo.
+- O teste desta era: **reconciliação** — os números batem?
+- Sem fatos confiáveis, as próximas eras constroem **sobre areia**.
 """,
         "notas": """
 - Frase de abertura: *"a era mais subestimada — e a que sustenta todas as outras."*
+- A demo roda transferências reais na API TechPix e deriva a análise (volume, contagens) da trilha imutável — agregação exata, não palpite.
 - Rodar a demo e apontar: cada evento é um **fato imutável** com timestamp; a análise é **agregação exata**, não palpite.
 - Pergunta retórica: *"isso é IA?"* — é analytics. E 80% do valor de dados em fintech ainda mora aqui (conciliação, fechamento contábil, BACEN).
 - Teste desta era: **reconciliação e pipeline de dados testada** — número errado aqui é bug de query, não de modelo.
@@ -84,13 +76,11 @@ imutável** + a análise descritiva (volume, contagens) derivada dela.
         "explicacao": """
 ## Análise preditiva: o que é isto? o que vai acontecer?
 
-Modelos **discriminativos** treinados em dados rotulados: score de fraude, churn — e
-visão computacional. Nosso caso KYC fictício: **"a selfie enviada contém uma
-pessoa?"**, respondido pelo **YOLOv8** rodando local.
+Modelos **discriminativos** treinados em dados rotulados — fraude, churn, visão.
+Nosso caso KYC: **"a selfie contém uma pessoa?"**, com **YOLOv8 rodando local**.
 
-A saída não é texto: é **classe + caixa + confiança**. Determinístico o bastante para
-teste de regressão clássico — e o teste da era é **precision/recall + matriz de
-confusão**, sobre um conjunto rotulado que o modelo nunca viu.
+- A saída não é texto: **classe + caixa + confiança**.
+- O teste desta era: **precision/recall + matriz de confusão**.
 """,
         "notas": """
 - YOLO = preditivo **discriminativo**: não escreve nada, classifica. COCO (80 classes), yolov8n com ~6 MB.
@@ -112,14 +102,12 @@ confusão**, sobre um conjunto rotulado que o modelo nunca viu.
         "explicacao": """
 ## Generativa: produza algo novo — com um porém
 
-LLMs produzem texto, código, respostas. A saída é **aberta e não determinística** —
-e aí mora o problema: a demo abaixo pergunta o limite Pix da TechPix a um LLM local
-**sem acesso a nenhum dado da empresa**. Ele vai responder algo **plausível**.
-Plausível ≠ correto.
+A demo pergunta o limite Pix a um LLM local **sem nenhum dado da empresa**.
+Ele vai responder algo **plausível**. E plausível ≠ correto.
 
-Essa é a fratura da era 3: o modelo não sabe o que não sabe. Como ancorar, bloquear
-e medir isso é o **Ato 3** da aula — primeiro precisamos da era 4, onde a coisa
-fica séria.
+- Saída **aberta e não determinística**.
+- O modelo não sabe o que não sabe: **alucinação**.
+- Domar isso é o **Ato 3** da aula.
 """,
         "notas": """
 - Rodar a pergunta SEM RAG e saborear a resposta: um valor plausível, confiante e **sem evidência nenhuma**. (Se a stack do Lab 2 estiver fora: plano B em docs/plano-b.md, não consertar ao vivo.)
@@ -142,17 +130,10 @@ fica séria.
         "explicacao": """
 ## O gargalo mudou de lugar
 
-Agentes combinam as três eras anteriores e **agem**: leem specs, escrevem código,
-rodam testes, abrem PRs. A velocidade de implementação explodiu — e o gargalo
-migrou da **escrita** para a **validação**: revisar, testar, garantir segurança
-e arquitetura.
+Agentes leem specs, escrevem código, rodam testes, abrem PRs. O gargalo migrou
+da **escrita** para a **validação**.
 
-**Todo o resto desta aula é a resposta a uma pergunta:**
-
-> Se a IA escreve o software, *o que* garante que ele está certo?
-
-A TechPix — nossa fintech fictícia — foi construída exatamente assim: agentes
-implementaram, a esteira validou. Incluindo um bug que **só o teste certo pega**.
+> Se a IA escreve o software, **o que** garante que ele está certo?
 
 ```mermaid
 flowchart LR
@@ -166,6 +147,7 @@ flowchart LR
 """,
         "notas": """
 - Este é o pivô da aula: fim do "tour pelas eras", começo da engenharia. Respirar.
+- Contar: a TechPix (fintech fictícia) foi construída exatamente assim — agentes implementaram, a esteira validou. Incluindo um bug que **só o teste certo pega**.
 - Responde o espírito das 4 perguntas da turma: a era 4 não é um produto, é um **modo de produção** — e exige esteira própria.
 - Anunciar o Ato 2: *"vamos percorrer a fábrica: PRD → ADR → spec → BDD → agentes com limites → API → e um bug plantado que 25 testes verdes NÃO pegam."*
 - Dica de ritmo: daqui até o passo 15 é o coração dos 40 min de lab. ⏱
@@ -180,10 +162,11 @@ flowchart LR
         "explicacao": """
 ## Greenfield: quem define o comportamento correto?
 
-Não existe código legado aqui (Greenfield). A fonte de verdade é o **PRD**: requisitos
-funcionais numerados (RF-01…), não funcionais (RNF-01: correção sob concorrência) e
-**perguntas abertas de discovery** — lacuna de requisito vira pergunta para humano,
-nunca suposição do agente.
+Sem código legado, a verdade é **construída** — e a fonte é o **PRD**.
+
+- Requisitos numerados: RF-01… e **RNF-01: correção sob concorrência**.
+- Lacuna de requisito ⇒ **pergunta para humano**, nunca suposição do agente.
+- Dinheiro em **centavos (int)** — float em valor monetário é defeito.
 """,
         "notas": """
 - Responde a pergunta do **Cauã**: no Greenfield a verdade é **construída** — PRD + ADRs + contratos + cenários de aceite + baselines.
@@ -201,10 +184,11 @@ nunca suposição do agente.
         "explicacao": """
 ## Decisões arquiteturais são registradas, não improvisadas
 
-Agentes implementam rápido demais para decisões implícitas. Cada decisão relevante vira
-um **ADR**: contexto, decisão, consequências (prós **e** contras) e alternativas
-rejeitadas. O ADR-0002 define a solução do bug que vamos plantar: idempotência por
-**reserva atômica**, nunca *check-then-act*.
+Agentes implementam rápido demais para decisões implícitas.
+
+- Cada decisão vira um **ADR**: contexto, decisão, consequências, alternativas rejeitadas.
+- **ADR-0002** já define a solução do bug desta aula: reserva **atômica**, nunca *check-then-act*.
+- Dinheiro/segurança ⇒ **aprovação humana** antes do agente implementar.
 """,
         "notas": """
 - ADR que afeta dinheiro/segurança exige **aprovação humana** antes do agente implementar.
@@ -221,13 +205,15 @@ rejeitadas. O ADR-0002 define a solução do bug que vamos plantar: idempotênci
         "explicacao": """
 ## Specification-Driven Development
 
-A spec traduz o PRD em **contrato verificável**: cada caso da API tem status code,
-código de erro estável e rastreabilidade (PRD ⇄ spec ⇄ cenário BDD). No fim, os
-**invariantes** (I-1 a I-4) são os oráculos que não dependem da implementação —
-ex.: I-1, *dinheiro não é criado nem destruído*.
+A spec traduz o PRD em **contrato verificável**, rastreável de ponta a ponta.
+
+- Cada caso da API: status code + **código de erro estável**.
+- **Invariantes (I-1…I-4)**: oráculos que não dependem da implementação.
+- Rastreabilidade: **PRD ⇄ spec ⇄ cenário BDD ⇄ teste**.
 """,
         "notas": """
 - A tabela de casos é literalmente o roteiro dos testes de integração — mostrar 2 linhas (idempotência e limite).
+- Exemplo de invariante para citar: **I-1, dinheiro não é criado nem destruído** — vale para qualquer execução, não para um exemplo.
 - **Invariantes = oráculos independentes**: o teste deriva do requisito, não do código. Se implementação e teste nascem do mesmo lugar, os dois erram juntos — pergunta do Cláudio.
 - Provedor simulado **determinístico** (valor terminado em 99 ⇒ timeout): reproduzível, sem flakiness. Em produção seria um test double do SPI.
 """,
@@ -240,9 +226,10 @@ ex.: I-1, *dinheiro não é criado nem destruído*.
         "explicacao": """
 ## Comportamento que roda, não documento que envelhece
 
-Os cenários Gherkin (em português!) são **executáveis** via pytest-bdd: cada linha
-`Quando/Então` vira um step de teste de verdade. Se a spec mudar e o código não, o
-cenário quebra — a documentação não consegue mentir.
+Cenários Gherkin **em português**, executáveis via pytest-bdd.
+
+- Cada `Quando/Então` vira um teste **de verdade**.
+- Spec mudou e o código não? O cenário **quebra** — documentação viva não mente.
 """,
         "notas": """
 - Abrir o `.feature` primeiro: linguagem de negócio, legível por produto/QA/dev/**agente** — todos leem o mesmo contrato.
@@ -261,11 +248,9 @@ cenário quebra — a documentação não consegue mentir.
         "explicacao": """
 ## Autonomia sem abrir mão da segurança
 
-- **Rules** = restrições (nunca float em dinheiro, nunca segredo no repo, nunca desligar gates).
-- **Skills** = procedimentos reutilizáveis (como rodar gates, como criar ADR).
-- **Agentes** = papéis com entrada/saída/ferramentas delimitadas — o **Testador não lê o código**,
-  só o PRD/spec, para os oráculos serem independentes.
-- **Orquestração** = worktrees isoladas, contratos read-only, integração via PR.
+- **Rules** = restrições · **Skills** = procedimentos · **Agentes** = papéis delimitados.
+- O **Testador não lê o código** — só PRD/spec: oráculo independente.
+- Worktrees isoladas, contratos read-only, integração via **PR**.
 
 ```mermaid
 flowchart LR
@@ -278,6 +263,7 @@ flowchart LR
 ```
 """,
         "notas": """
+- Explicar cada camada: rules = o que NUNCA fazer (float em dinheiro, segredo no repo, desligar gate); skills = procedimentos repetíveis (rodar gates, criar ADR); agentes = papéis com entrada/saída/ferramentas delimitadas.
 - Responde o **Renato** (autonomia × segurança): pré-aprovar operações seguras (testes, lint, leitura), exigir humano para destrutivas/segredos/deploy/merge — **nunca** bypass irrestrito.
 - Responde o **Matheus** (worktrees/paralelismo): 1 worktree por tarefa, contratos read-only, 1 agente por arquivo quente, integração via PR. Paralelismo não elimina dependência — pode aumentar retrabalho.
 - Detalhe que rende discussão: o Testador **não lê a implementação**. Por quê? Oráculo independente.
@@ -293,10 +279,10 @@ flowchart LR
         "explicacao": """
 ## "A arquitetura limpa dificulta para a IA — ela se perde e gasta tokens. Qual usar?"
 
-O diagnóstico está certo, mas o culpado não é a Clean Architecture — é a **cerimônia**:
-indireção especulativa. Cada salto (interface → implementação → factory → camada →
-mapper) é um arquivo a mais que o agente precisa **carregar no contexto**. Humanos
-pagam em cliques; agentes pagam em **tokens e erros de navegação**.
+O diagnóstico está certo — mas o culpado é a **cerimônia**, não os princípios.
+
+- Cada salto de indireção = um arquivo a mais no **contexto** do agente.
+- Humanos pagam em cliques; agentes pagam em **tokens e erros de navegação**.
 
 ```mermaid
 flowchart LR
@@ -309,10 +295,8 @@ flowchart LR
   end
 ```
 
-**Receita para projeto novo:** monólito modular com **fatias verticais** + núcleo de
-domínio puro — o *espírito* da Clean Architecture (domínio no centro, I/O na borda)
-com a *forma* mais plana possível. **Este repositório é o exemplo:** 6 arquivos planos
-que gritam o domínio, construídos por agentes sem se perder.
+**Receita:** monólito modular + **fatias verticais** + domínio no centro.
+**Este repositório é o exemplo:** 6 arquivos planos, construídos por agentes.
 """,
         "notas": """
 - Validar a dor: *"vocês estão certos — o agente se perde mesmo. Mas separem princípio de cerimônia."*
@@ -331,9 +315,11 @@ que gritam o domínio, construídos por agentes sem se perder.
         "explicacao": """
 ## Transferência, idempotência e estados — em requisições reais
 
-As ações abaixo executam a API TechPix em memória e mostram **requisição → resposta**
-de cada caso: sucesso (201), reapresentação da mesma chave (200, sem novo débito) e
-conflito de payload (409).
+A demo executa a API TechPix e mostra **requisição → resposta** de cada caso:
+
+- Transferência nova ⇒ **201**
+- Mesma chave, mesmo payload ⇒ **200, sem novo débito**
+- Mesma chave, payload diferente ⇒ **409**
 """,
         "notas": """
 - Clicar e narrar devagar as 3 requisições: 201 → 200 (mesmo `id`! sem novo débito) → 409.
@@ -352,10 +338,11 @@ conflito de payload (409).
         "explicacao": """
 ## O estado mais importante de um sistema de pagamento
 
-Quando o provedor não responde, **não sabemos** se liquidou. Estornar pode gerar débito
-duplo; confirmar pode creditar sem liquidação. Resposta certa: estado **UNKNOWN**,
-fundos **reservados**, e **reconciliação** depois (ADR-0003). O retry do cliente com a
-mesma chave é seguro: retorna a transferência existente.
+Timeout do provedor ⇒ **não sabemos** se liquidou.
+
+- Estornar pode gerar **débito duplo**; confirmar pode **creditar sem liquidação**.
+- Resposta certa: **UNKNOWN** + fundos reservados + **reconciliação** depois.
+- Retry com a mesma chave é **seguro**.
 
 ```mermaid
 stateDiagram-v2
@@ -385,13 +372,11 @@ stateDiagram-v2
         "explicacao": """
 ## Quem testa o código que a IA escreve?
 
-A branch `implemented` tem o defeito clássico de pagamento: a idempotência checa a
-chave e **só grava depois** (check-then-act). Sequencialmente funciona — todos os
-testes "normais" passam. Sob concorrência, N requisições passam pela checagem antes
-de qualquer gravação e **todas debitam**.
+A branch `implemented` tem o clássico **check-then-act**: checa a chave e só grava depois.
 
-O oráculo que pega isso deriva do **PRD** (RNF-01), não da implementação: 8 threads,
-mesma chave, barreira de sincronização ⇒ exatamente 1 débito.
+- Sequencial: funciona. **25 testes verdes**, coverage alto.
+- Concorrente: N requisições passam na checagem — e **todas debitam**.
+- O oráculo que pega deriva do **PRD (RNF-01)**: 8 threads, mesma chave ⇒ **1 débito**.
 """,
         "notas": """
 - **Clímax da aula.** Ordem: (1) diff, (2) teste falhando.
@@ -412,9 +397,10 @@ mesma chave, barreira de sincronização ⇒ exatamente 1 débito.
         "explicacao": """
 ## Reserva atômica + gates verdes
 
-A correção (ADR-0002) move checagem da chave, validação de saldo, reserva de fundos e
-registro da chave para a **mesma seção crítica** — elimina a janela de corrida por
-construção. Em produção: transação + `UNIQUE(idempotency_key)`.
+A correção (ADR-0002): checagem, reserva e débito na **mesma seção crítica**.
+
+- A janela de corrida deixa de existir **por construção**, não por sorte de timing.
+- Em produção: transação + `UNIQUE(idempotency_key)`.
 """,
         "notas": """
 - Rodar o mesmo teste na versão corrigida: **passa** — não por sorte de timing, por construção.
@@ -436,12 +422,8 @@ construção. Em produção: transação + `UNIQUE(idempotency_key)`.
         "explicacao": """
 ## A resposta para a alucinação do passo 4
 
-No passo 4, o modelo **chutou** o limite Pix. Agora a mesma pergunta com **RAG**:
-o retriever busca os trechos relevantes do FAQ no **pgvector** e o LLM responde
-**ancorado no contexto, citando as fontes**.
-
-Spec → implementação → teste: para o chatbot, a "spec" é a base de conhecimento, e
-a resposta certa aponta a evidência.
+Mesma pergunta — agora o retriever busca a **evidência** no pgvector e o LLM
+responde **ancorado, citando as fontes**.
 
 ```mermaid
 flowchart LR
@@ -454,6 +436,7 @@ flowchart LR
 """,
         "notas": """
 - Callback explícito: *"lembram do chute do passo 4? Mesma pergunta, agora com RAG."* Rodar e comparar: R$ 5.000 citando `[limites]`.
+- Fechar o paralelo do lifecycle: para o chatbot, a **base de conhecimento é a spec** — e a resposta certa aponta a evidência, como o teste aponta o requisito.
 - Mostrar que a resposta traz `fontes` — contrato de citação que os evals vão checar.
 - Stack em uma frase cada: Ollama (inferência local), LangChain (cadeia em código), pgvector (busca vetorial), Langfuse (traces em http://localhost:3000), Langflow (mesma cadeia em canvas, http://localhost:7860).
 - Langflow ≠ substituto de engenharia: outra **interface** para a mesma cadeia — canvas não dá guardrail, teste nem CI de graça.
@@ -470,10 +453,10 @@ flowchart LR
         "explicacao": """
 ## Regra financeira crítica não se negocia com o modelo
 
-Prompt injection, pedido de dados pessoais e **ordens de transferência** são bloqueados
-por regras determinísticas **antes** do LLM — repare no tempo: ~0 s, o modelo nem é
-chamado. O bot informa; quem executa é o sistema do Ato 2, com autenticação e
-idempotência.
+Injection, PII e **ordens de transferência**: bloqueados **antes** do LLM.
+
+- Repare no tempo: **~0 s** — o modelo nem é chamado.
+- O bot **informa**; quem executa é o sistema do Ato 2.
 
 ```mermaid
 flowchart LR
@@ -504,19 +487,16 @@ flowchart LR
         "explicacao": """
 ## Três réguas diferentes — nenhum número isolado é "qualidade"
 
-14 casos: perguntas conhecidas, fora da base, injeção, PII, transferência, citação.
-O runner reporta **três medições separadas**, de propósito:
+1. **Gates determinísticos** — 100% ou reprova. Inegociável.
+2. **Heurísticas de texto** — medem *presença*, não correção.
+3. **Juiz (groundedness)** — informativo, nunca gate.
 
-1. **Gates determinísticos** (guardrails/contratos): 100% ou reprova — inegociável.
-2. **Heurísticas de texto** (termos e citações esperados): medem *presença*, não correção.
-3. **Groundedness pelo juiz** (LLM local lendo os **trechos recuperados**): informativo.
-
-**A provocação registrada em 21/10:** 8/9 respostas passaram nas heurísticas… e
-algumas levaram **nota baixa do juiz**. Como? Porque **avaliadores diferentes medem
-propriedades diferentes** — divergência não vira média, vira revisão humana.
+**A provocação:** respostas passaram na heurística… e levaram **nota baixa do juiz**.
+Quem está certo?
 """,
         "notas": """
 - Rodar e usar os ~40 s para explicar as três réguas enquanto a tela rola.
+- Contexto do dataset: 14 casos — conhecidas, fora da base, injeção, PII, transferência, citação. Resposta da provocação: **avaliadores diferentes medem propriedades diferentes** — divergência não vira média, vira revisão humana.
 - **A provocação central:** *"8 de 9 passaram na heurística — e o juiz deu nota baixa em algumas. Quem está certo?"* Resposta: os dois — medem coisas diferentes. Heurística = o termo apareceu; juiz = a resposta é sustentada pelos trechos. **Nunca apresentar um % único como qualidade global.**
 - **Caso q03 (real):** retrieval trouxe o chunk certo do limite noturno e o Qwen 3B respondeu que o limite "permanece constante" — **falha de groundedness** que a heurística pegou. Teste manual de 2 perguntas nunca pegaria.
 - O juiz agora recebe os **trechos recuperados** (não só nomes de fontes) e responde **JSON validado 0–10** — mesmo assim: juiz 3B é informativo, **nunca gate**. Determinístico decide; juiz sinaliza; humano arbitra.
@@ -546,10 +526,11 @@ A história que percorremos:
 | **Agir** | construa o sistema | oráculos do requisito + gates + humano |
 
 Quanto mais autonomia a IA ganha, **mais engenharia de validação** ela exige.
-Fonte de verdade explícita, oráculos independentes, gates em camadas e decisões
-humanas obrigatórias — **qualidade é propriedade da esteira, não do commit**.
+
+> **Qualidade é propriedade da esteira, não do commit.**
 """,
         "notas": """
+- Recapitular os 4 pilares em voz alta: fonte de verdade explícita, oráculos independentes, gates em camadas, decisões humanas obrigatórias.
 - Fechar respondendo nominalmente as 4 perguntas da turma (Matheus, Renato, Cauã, Cláudio) em 1 frase cada — tudo foi demonstrado ao vivo.
 - Reprisar a tabela apontando as demos: auditoria (p.2), YOLO/frisbee (p.3), chute vs RAG (p.4 e 16), bug RNF-01 (p.14).
 - Perguntas de discussão (escolher 2):
