@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notas do apresentador</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<style>
+  :root{--bg:#0b0d12;--panel:#141821;--border:#262c3b;--text:#eef0f6;--muted:#959cb0;
+    --accent:#ffc247;--ok:#3ecf8e}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);
+    display:flex;flex-direction:column;height:100vh}
+  header{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+    padding:14px 26px;border-bottom:1px solid var(--border);background:var(--panel)}
+  header .passo{font-size:13px;color:var(--muted);letter-spacing:.5px}
+  header .tempo{font-family:Consolas,monospace;font-size:15px;color:var(--muted);white-space:nowrap}
+  header .tempo b{color:var(--accent);font-size:19px}
+  h1{font-size:26px;margin:14px 26px 0;color:var(--accent)}
+  #notas{flex:1;overflow-y:auto;padding:6px 26px 20px;font-size:21px;line-height:1.75}
+  #notas ul{padding-left:26px}
+  #notas li{margin:12px 0}
+  #notas strong{color:#fff}
+  #notas em{color:var(--accent);font-style:italic}
+  #notas code{background:#1d2230;padding:2px 7px;border-radius:6px;font-size:.85em}
+  footer{padding:12px 26px;border-top:1px solid var(--border);background:var(--panel);
+    font-size:15px;color:var(--muted)}
+  footer b{color:var(--text)}
+  .vazio{color:var(--muted);font-size:17px;padding:30px 26px}
+</style>
+</head>
+<body>
+<header>
+  <span class="passo" id="pos">conectando…</span>
+  <span class="tempo">🕐 <b id="relogio">--:--</b> &nbsp;·&nbsp; decorrido <b id="decorrido">00:00</b></span>
+</header>
+<h1 id="titulo">Notas do apresentador</h1>
+<div id="notas" class="vazio">Aguardando a janela principal (http://localhost:9000).<br>
+Navegue lá — esta janela acompanha sozinha.</div>
+<footer id="proximo"></footer>
+<script>
+let passos = [];
+const inicio = Date.now();
+
+function tick(){
+  const agora = new Date();
+  document.getElementById('relogio').textContent =
+    agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const s = Math.floor((Date.now()-inicio)/1000);
+  document.getElementById('decorrido').textContent =
+    String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+setInterval(tick, 1000); tick();
+
+function render(i){
+  if(!passos.length || i==null || i<0 || i>=passos.length) return;
+  const p = passos[i];
+  document.getElementById('pos').textContent = `PASSO ${i+1} DE ${passos.length}`;
+  document.getElementById('titulo').textContent = p.titulo;
+  const div = document.getElementById('notas');
+  div.className = '';
+  div.innerHTML = marked.parse(p.notas || '*Sem notas para este passo.*');
+  div.scrollTop = 0;
+  const prox = passos[i+1];
+  document.getElementById('proximo').innerHTML =
+    prox ? `A seguir: <b>${prox.titulo}</b>` : 'Último passo — fechamento.';
+}
+
+async function init(){
+  passos = await (await fetch('/api/steps')).json();
+  // estado inicial: o que a janela principal deixou no localStorage
+  let i = null;
+  try { i = parseInt(localStorage.getItem('tour-passo')); } catch(e){}
+  if(!Number.isNaN(i) && i!=null) render(i);
+
+  try{
+    const bc = new BroadcastChannel('tour');
+    bc.onmessage = e => render(e.data);
+  }catch(e){}
+  window.addEventListener('storage', e => {
+    if(e.key === 'tour-passo') render(parseInt(e.newValue));
+  });
+}
+init();
+</script>
+</body>
+</html>

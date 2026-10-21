@@ -54,10 +54,24 @@
 <div class="rodape">
   <button onclick="navegar(-1)">← Anterior</button>
   <span id="pos"></span>
-  <button onclick="navegar(1)">Próximo →</button>
+  <span>
+    <button onclick="abrirNotas()" title="Abre a janela de notas do apresentador (tecla N)">🗒 Notas</button>
+    <button onclick="navegar(1)">Próximo →</button>
+  </span>
 </div>
 <script>
 let passos = [], atual = 0;
+let canal = null;
+try { canal = new BroadcastChannel('tour'); } catch(e) {}
+
+function sincronizar(i){
+  try { localStorage.setItem('tour-passo', i); } catch(e) {}
+  if (canal) canal.postMessage(i);
+}
+
+function abrirNotas(){
+  window.open('/notas', 'tour-notas', 'width=760,height=900');
+}
 
 const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
@@ -76,10 +90,12 @@ function navegar(d){ mostrar(Math.min(Math.max(atual+d,0),passos.length-1)); }
 document.addEventListener('keydown', e=>{
   if(e.key==='ArrowRight') navegar(1);
   if(e.key==='ArrowLeft') navegar(-1);
+  if(e.key==='n' || e.key==='N') abrirNotas();
 });
 
 async function mostrar(i){
   atual = i;
+  sincronizar(i);
   const p = passos[i];
   document.querySelectorAll('nav button').forEach((b,j)=>b.classList.toggle('ativo', j===i));
   document.getElementById('pos').textContent = `${i+1} / ${passos.length}`;

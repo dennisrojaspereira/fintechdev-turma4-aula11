@@ -14,6 +14,16 @@ reais do repositório e botões **"Ao vivo"** que executam as demos de verdade
 Abra **http://localhost:9000**. Navegue com as setas **← →** do teclado ou pelo
 menu lateral.
 
+## Notas do apresentador (segunda janela)
+
+Clique em **🗒 Notas** (ou tecle **N**) para abrir **http://localhost:9000/notas**
+em outra janela — arraste para o segundo monitor ou deixe fora da projeção.
+Ela **acompanha sozinha** o passo da janela principal (BroadcastChannel/localStorage,
+mesmo navegador) e mostra: o que falar, perguntas para a turma, dicas de tempo,
+relógio e tempo decorrido da apresentação, além do título do próximo passo.
+
+A tela principal fica limpa para o público; o "o que falar" vive só nas notas.
+
 ## Pré-requisitos por passo
 
 | Passos | Precisa de |

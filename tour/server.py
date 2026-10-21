@@ -29,6 +29,12 @@ def index() -> FileResponse:
     return FileResponse(STATIC / "index.html")
 
 
+@app.get("/notas")
+def notas() -> FileResponse:
+    """Janela do apresentador: acompanha o passo da janela principal."""
+    return FileResponse(STATIC / "notas.html")
+
+
 @app.get("/api/steps")
 def steps() -> list[dict]:
     return STEPS
