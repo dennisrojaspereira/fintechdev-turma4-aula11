@@ -126,6 +126,7 @@ fica séria.
 - Nomear o fenômeno: **alucinação** — não é bug do modelo, é a natureza dele: gerar o provável, não o verdadeiro.
 - *Cliffhanger explícito:* **"guardem essa resposta errada. No Ato 3 voltamos com RAG, guardrails e evals para domar exatamente isso."**
 - Trade-offs de rodar local (Ollama, qwen2.5:3b na GTX 1660): custo por token zero, dado não sai da máquina × qualidade menor que API hospedada.
+- **Lost in the middle / dumb zone (teoria, tecla T):** a janela de contexto tem geografia — recall em U (meio do prompt some) e degradação por ocupação (janela cheia = modelo mais burro bem antes do limite). É por isso que o RAG usa top-4 e não top-20, e por que a pergunta vai por último no prompt.
 - **SLM × LLM (teoria, tecla T):** mesma arquitetura, escalas diferentes — o que muda é o que *emerge* (instruções longas, raciocínio, calibração). Nosso 3B é um **SLM**: tudo que ele errar hoje (citação, juiz ruidoso) é característico. Padrão de mercado: **cascata** — SLM nos 80% baratos, LLM nos 20% difíceis. E quanto menor o modelo, mais o sistema em volta (RAG/guardrails/evals) carrega a qualidade.
 - Gancho para a era 4: *"e se, em vez de responder FAQ, essa IA escrever o sistema de pagamento?"*
 """,
@@ -787,6 +788,51 @@ Consequências diretas:
    modelo de fronteira não. O trade-off é capacidade de seguir instruções — que vocês
    vão ver falhar ao vivo no contrato de citação.
 
+### A janela de contexto tem geografia: *lost in the middle* e a *dumb zone*
+
+A janela de contexto não é uma memória uniforme — **onde** a informação está e
+**quanto** da janela você usa mudam a qualidade da resposta:
+
+**Lost in the middle** (Liu et al., 2023): em contextos longos, os modelos recuperam
+muito melhor o que está no **começo** e no **fim** do prompt; informação enterrada no
+**meio** tem recall drasticamente menor. A curva é um **U**:
+
+```text
+recall
+ alto │ ███                                         ███
+      │ ████                                       ████
+      │ █████                                     █████
+baixo │ ████████████████████████████████████████████████
+      └────────────────────────────────────────────────→
+       início          MEIO (vale do U)            fim
+                "enterrou no meio = quase não existe"
+```
+
+**Dumb zone** (ou *context rot*): a degradação por **ocupação**. Um modelo "de 128k
+tokens" não rende igual com a janela cheia — a qualidade de raciocínio e de seguir
+instruções cai bem **antes** do limite duro, tipicamente a partir de ~40–60% de uso.
+O limite anunciado é até onde ele *aceita* tokens; a zona útil é até onde ele
+*pensa bem* com eles.
+
+| Sintoma na prática | Causa |
+|--------------------|-------|
+| "Ele esqueceu a instrução que dei lá em cima" | instrução no meio do contexto (vale do U) |
+| Agente fica repetitivo/perdido em sessão longa | dumb zone: janela cheia de histórico |
+| RAG com 20 chunks responde pior que com 4 | evidência diluída + meio do contexto |
+| Resumir documento gigante perde o miolo | literalmente lost in the middle |
+
+**O que fazer a respeito (e onde o lab já faz):**
+
+1. **Posição importa:** instruções críticas no início E repetidas no fim; no nosso RAG,
+   a evidência entra no system prompt e a **pergunta vem por último** (perto da geração).
+2. **Contexto enxuto > contexto cheio:** top-4 chunks, não top-20 — curadoria vence
+   volume. Mais contexto ≠ mais qualidade; a partir de um ponto, é o contrário.
+3. **Compactação/sumarização** em sessões longas de agente: resumir o histórico e
+   recomeçar com o resumo, em vez de arrastar a janela cheia pela dumb zone.
+4. **Arquitetura do repo** (passo 11): fatias verticais e CLAUDE.md curto existem para
+   o agente **não precisar** encher a janela — menos arquivos carregados = longe da
+   dumb zone = mais inteligente na tarefa.
+
 ### SLM × LLM: a mesma física, escalas diferentes
 
 **SLM** (*Small Language Model*, ~0.5B–8B parâmetros) e **LLM** (dezenas a centenas de
@@ -978,6 +1024,11 @@ Com IA, dois custos mudaram de preço: **escrever código ficou barato** (refato
 extrair abstração quando precisar custa pouco) e **carregar contexto ficou caro**
 (cada indireção cobra em toda tarefa futura). A conclusão inverte o hábito: comece
 plano, extraia sob demanda — o oposto de "deixar os pontos de extensão prontos".
+
+E o custo de contexto não é só financeiro: pela **dumb zone** (passo 4, teoria),
+janela mais cheia = modelo **pior** — arquivos espalhados não gastam apenas tokens,
+empurram o agente para a zona onde ele raciocina mal. Arquitetura plana mantém o
+agente na parte inteligente da janela.
 """,
     "api": """
 ### Idempotência, formalmente
