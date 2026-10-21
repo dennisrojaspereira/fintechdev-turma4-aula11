@@ -6,10 +6,14 @@ Execute a partir de chatbot/:  uvicorn app.main:app --port 8080
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+
+STATIC = Path(__file__).resolve().parent / "static"
 
 from .config import settings
 from .guardrails import avaliar_entrada, avaliar_saida
@@ -34,6 +38,11 @@ def create_app(responder: Callable[..., dict] | None = None) -> FastAPI:
 
             app.state.responder = Responder(settings)
         return app.state.responder
+
+    @app.get("/")
+    def ui() -> FileResponse:
+        """Tela de chat que mostra por onde a informacao passa (pipeline didatico)."""
+        return FileResponse(STATIC / "chat.html")
 
     @app.get("/health")
     def health() -> dict:

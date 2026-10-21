@@ -43,6 +43,12 @@
     display:inline-flex;align-items:center;justify-content:center;font-size:11px;
     font-weight:700;color:var(--muted);transition:all .2s}
   nav button.ativo .num{background:var(--accent);color:#fff}
+  .links{margin-top:18px;border-top:1px solid var(--border);padding-top:12px}
+  .links h2{font-size:11px;letter-spacing:1.2px;color:var(--muted);margin:4px 10px 8px;font-weight:700}
+  .links a{display:flex;align-items:center;gap:9px;color:var(--muted);text-decoration:none;
+    font-size:12.5px;padding:7px 12px;border-radius:8px;transition:all .15s}
+  .links a:hover{background:var(--panel2);color:var(--text);transform:translateX(3px)}
+  .links a .url{margin-left:auto;font-size:10px;color:#565e75;font-family:Consolas,monospace}
 
   main{flex:1;overflow-y:auto;padding:46px 56px 110px;position:relative}
   .slide{max-width:1000px;margin:0 auto}
@@ -168,7 +174,17 @@
 </head>
 <body>
 <div id="progresso"></div>
-<nav id="menu"><h1>AULA 11 · ENGENHARIA COM AGENTES DE IA</h1></nav>
+<nav id="menu"><h1>AULA 11 · ENGENHARIA COM AGENTES DE IA</h1>
+<div class="links" id="linksbar">
+  <h2>LINKS DA AULA</h2>
+  <a href="http://localhost:8080" target="_blank">💬 Chat TechPix (pipeline ao vivo)<span class="url">:8080</span></a>
+  <a href="http://localhost:8080/docs" target="_blank">📘 Swagger da API do chat<span class="url">:8080/docs</span></a>
+  <a href="http://localhost:3000" target="_blank">📊 Langfuse (traces)<span class="url">:3000</span></a>
+  <a href="http://localhost:7860" target="_blank">🎨 Langflow (canvas)<span class="url">:7860</span></a>
+  <a href="/notas" target="tour-notas">🗒 Notas do apresentador<span class="url">/notas</span></a>
+  <a href="https://github.com/dennisrojaspereira/fintechdev-turma4-aula11" target="_blank">💻 Repositório no GitHub<span class="url">github</span></a>
+</div>
+</nav>
 <main><div class="slide" id="conteudo"></div></main>
 <div class="rodape">
   <button onclick="navegar(-1)">← Anterior</button>
@@ -234,7 +250,7 @@ async function init(){
     const b = document.createElement('button');
     b.innerHTML = `<span class="num">${i+1}</span><span>${p.titulo.replace(/^\d+\.\s*/,'')}</span>`;
     b.onclick = ()=>{ direcao = i>atual?1:-1; mostrar(i); };
-    b.id = 'nav'+i; menu.appendChild(b);
+    b.id = 'nav'+i; menu.insertBefore(b, document.getElementById('linksbar'));
   });
   // deep-link: /#5 abre direto no passo 5
   const h = parseInt(location.hash.slice(1));
