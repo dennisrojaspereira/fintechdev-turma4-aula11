@@ -48,7 +48,8 @@ Headers: `Idempotency-Key: <string 8..64 chars>` (obrigatório — RF-01)
 Para testes reproduzíveis (sem flakiness):
 
 - `valor_centavos % 100 == 99` ⇒ provedor **estoura timeout** ⇒ `UNKNOWN`.
-- Na reconciliação, o provedor confirma se `valor_centavos % 2 == 1`, nega caso contrário.
+- Na reconciliação, o provedor confirma se `(valor_centavos // 100) % 2 == 0` (par), nega caso contrário.
+  Ex.: 10099 ⇒ 100 (par) ⇒ confirmada; 10199 ⇒ 101 (ímpar) ⇒ negada com estorno.
 - Qualquer outro valor ⇒ confirmação imediata ⇒ `COMPLETED`.
 
 ## Contas seed (fixture de desenvolvimento)

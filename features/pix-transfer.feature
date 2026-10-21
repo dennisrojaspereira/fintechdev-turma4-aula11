@@ -18,16 +18,16 @@ Funcionalidade: Transferência Pix TechPix
 
   @duplicidade
   Cenário: Reapresentação da mesma chave de idempotência não debita duas vezes
-    Quando transfiro 15000 centavos de "acc-alice" para "acc-bruno" com a chave "k-dup-1"
-    E transfiro novamente 15000 centavos de "acc-alice" para "acc-bruno" com a chave "k-dup-1"
+    Quando transfiro 15000 centavos de "acc-alice" para "acc-bruno" com a chave "k-duplicada-1"
+    E transfiro novamente 15000 centavos de "acc-alice" para "acc-bruno" com a chave "k-duplicada-1"
     Então a resposta tem status 200
     E a transferência fica no estado "COMPLETED"
     E o saldo disponível de "acc-alice" é 985000 centavos
 
   @conflito
   Cenário: Mesma chave com payload diferente é rejeitada
-    Quando transfiro 15000 centavos de "acc-alice" para "acc-bruno" com a chave "k-conf-1"
-    E transfiro novamente 20000 centavos de "acc-alice" para "acc-bruno" com a chave "k-conf-1"
+    Quando transfiro 15000 centavos de "acc-alice" para "acc-bruno" com a chave "k-conflito-1"
+    E transfiro novamente 20000 centavos de "acc-alice" para "acc-bruno" com a chave "k-conflito-1"
     Então a resposta tem status 409
 
   @saldo
