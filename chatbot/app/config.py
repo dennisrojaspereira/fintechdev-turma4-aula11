@@ -5,7 +5,16 @@ Nenhum valor sensivel e hardcoded; chaves do Langfuse sao opcionais.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Carrega o .env da raiz do repo (e um chatbot/.env, se existir) para o ambiente —
+# necessario para as chaves do Langfuse, lidas via os.getenv em rag.py.
+_RAIZ = Path(__file__).resolve().parents[2]
+load_dotenv(_RAIZ / ".env")
+load_dotenv(_RAIZ / "chatbot" / ".env")
 
 
 class Settings(BaseSettings):

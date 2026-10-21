@@ -75,13 +75,21 @@ def _fontes_utilizadas(resposta: str, docs: list) -> list[str]:
     return sorted(utilizadas)
 
 
-def _langfuse_callbacks() -> list:
-    """Callback do Langfuse apenas quando as chaves existem no ambiente."""
-    if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
-        from langfuse.callback import CallbackHandler
+def _langfuse_client():
+    """Cliente Langfuse (SDK low-level v2) apenas quando ha chaves no ambiente.
 
-        return [CallbackHandler()]
-    return []
+    Nao usamos o CallbackHandler de langchain do SDK v2 porque ele e
+    incompativel com versoes novas do LangChain; o trace manual (trace +
+    span de retrieval + generation) funciona em qualquer combinacao.
+    """
+    if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
+        try:
+            from langfuse import Langfuse
+
+            return Langfuse()
+        except Exception:  # noqa: BLE001 - telemetria nunca derruba o chat
+            return None
+    return None
 
 
 class Responder:
@@ -91,6 +99,7 @@ class Responder:
         self.settings = settings
         self._llm: ChatOllama | None = None
         self._vectorstore: PGVector | None = None
+        self._langfuse = _langfuse_client()
 
     @property
     def llm(self) -> ChatOllama:
@@ -116,28 +125,50 @@ class Responder:
         return self._vectorstore
 
     def __call__(self, pergunta: str, usar_rag: bool = True) -> dict:
-        config = {"callbacks": _langfuse_callbacks(), "run_name": "techpix-chat"}
+        trace = None
+        if self._langfuse is not None:
+            trace = self._langfuse.trace(
+                name="techpix-chat", input={"pergunta": pergunta, "usar_rag": usar_rag}
+            )
 
         if not usar_rag:
-            msg = (PROMPT_SEM_RAG | self.llm).invoke({"pergunta": pergunta}, config=config)
+            gen = trace.generation(name="geracao-sem-rag", model=self.settings.chat_model,
+                                   input=pergunta) if trace else None
+            msg = (PROMPT_SEM_RAG | self.llm).invoke({"pergunta": pergunta})
+            if gen:
+                gen.end(output=msg.content)
+            if trace:
+                trace.update(output={"resposta": msg.content, "modo": "sem_rag"})
             return {"resposta": msg.content, "fontes": [], "modo": "sem_rag"}
 
+        span = trace.span(name="retrieval", input=pergunta) if trace else None
         docs = self.vectorstore.as_retriever(
             search_kwargs={"k": self.settings.retriever_k}
-        ).invoke(pergunta, config=config)
+        ).invoke(pergunta)
+        if span:
+            span.end(output=[d.metadata.get("fonte", "?") for d in docs])
+
         contexto = "\n\n".join(
             f"[{d.metadata.get('fonte', 'desconhecida')}]\n{d.page_content}" for d in docs
         )
+        gen = trace.generation(
+            name="geracao-rag", model=self.settings.chat_model,
+            input={"pergunta": pergunta, "contexto": contexto[:2000]},
+        ) if trace else None
         msg = (PROMPT_RAG | self.llm).invoke(
             {"contexto": contexto or "(nenhum trecho recuperado)", "pergunta": pergunta},
-            config=config,
         )
+        if gen:
+            gen.end(output=msg.content)
         # Recuperar um documento NAO significa fundamentar a resposta nele:
         # "fontes" sao as efetivamente utilizadas (citacao explicita ou
         # atribuicao lexical); as recuperadas vao separadas, e os trechos
         # alimentam o juiz dos evals.
         recuperadas = sorted({d.metadata.get("fonte", "desconhecida") for d in docs})
         citadas = _fontes_utilizadas(msg.content, docs)
+        if trace:
+            trace.update(output={"resposta": msg.content, "fontes": citadas,
+                                 "fontes_recuperadas": recuperadas})
         trechos = [
             {"fonte": d.metadata.get("fonte", "desconhecida"), "texto": d.page_content}
             for d in docs
