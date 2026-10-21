@@ -1,16 +1,14 @@
 """Regras de negocio da transferencia Pix (simulada).
 
-ATENCAO (checkpoint `implemented`): a idempotencia abaixo usa o padrao
-check-then-act — consulta a chave e so grava depois de validar e "ir ao banco".
-Sob concorrencia, duas requisicoes com a mesma chave passam pela checagem antes
-de qualquer gravacao e AMBAS debitam. O teste
-tests/test_idempotency_concurrency.py (oraculo derivado do PRD, RNF-01)
-demonstra o defeito. Correcao no checkpoint `validated` (ADR-0002).
+Idempotencia por RESERVA ATOMICA da chave (ADR-0002): checagem da chave,
+validacao de saldo, reserva de fundos, criacao da transferencia e registro da
+chave acontecem na MESMA secao critica. Nao existe janela entre "checar" e
+"gravar" — o anti-padrao check-then-act do checkpoint `implemented` foi
+removido. Em producao, o equivalente e uma transacao com
+UNIQUE(idempotency_key) e INSERT ... ON CONFLICT.
 """
 
 from __future__ import annotations
-
-import time
 
 from . import provider
 from .errors import (
@@ -25,10 +23,6 @@ from .models import Transfer, TransferState
 from .store import Store
 
 LIMITE_POR_TRANSACAO_CENTAVOS = 500_000  # R$ 5.000,00 (RF-03)
-
-# Simula a latencia de um round-trip ao banco/provedor entre a checagem da
-# chave e a gravacao — e exatamente essa janela que torna o bug reproduzivel.
-_LATENCIA_SIMULADA_S = 0.02
 
 
 class TransferService:
@@ -54,36 +48,31 @@ class TransferService:
         """Cria (ou retorna) a transferencia. Retorna (transfer, reutilizada)."""
         self._validar_payload(origem, destino, valor_centavos)
 
-        # BUG (check-then-act): checagem da chave FORA da secao critica.
-        existente_id = self.store.idempotency.get(idempotency_key)
-        if existente_id is not None:
-            t = self.store.transfers[existente_id]
-            if not self._mesma_requisicao(t, origem, destino, valor_centavos):
-                raise ConflitoIdempotencia()
-            return t, True
-
-        if origem not in self.store.accounts or destino not in self.store.accounts:
-            raise ContaInexistente()
-        conta_origem = self.store.accounts[origem]
-        if conta_origem.saldo_disponivel_centavos < valor_centavos:
-            raise SaldoInsuficiente()
-
-        # "Ida ao banco": entre a checagem acima e a gravacao abaixo existe uma
-        # janela de corrida — outra requisicao com a mesma chave passa pela
-        # checagem enquanto esta dorme aqui.
-        time.sleep(_LATENCIA_SIMULADA_S)
-
-        t = Transfer(
-            idempotency_key=idempotency_key,
-            origem=origem,
-            destino=destino,
-            valor_centavos=valor_centavos,
-        )
         with self.store.lock:
+            # Checagem + reserva da chave na MESMA secao critica (ADR-0002).
+            existente_id = self.store.idempotency.get(idempotency_key)
+            if existente_id is not None:
+                t = self.store.transfers[existente_id]
+                if not self._mesma_requisicao(t, origem, destino, valor_centavos):
+                    raise ConflitoIdempotencia()
+                return t, True
+
+            if origem not in self.store.accounts or destino not in self.store.accounts:
+                raise ContaInexistente()
+            conta_origem = self.store.accounts[origem]
+            if conta_origem.saldo_disponivel_centavos < valor_centavos:
+                raise SaldoInsuficiente()
+
+            t = Transfer(
+                idempotency_key=idempotency_key,
+                origem=origem,
+                destino=destino,
+                valor_centavos=valor_centavos,
+            )
             conta_origem.saldo_disponivel_centavos -= valor_centavos
             conta_origem.reservado_centavos += valor_centavos
             self.store.transfers[t.id] = t
-            self.store.idempotency[idempotency_key] = t.id  # act — tarde demais
+            self.store.idempotency[idempotency_key] = t.id
             self.store.log(
                 "transferencia_criada",
                 transfer_id=t.id,
@@ -138,8 +127,6 @@ class TransferService:
             resultado = provider.consultar(t.valor_centavos)
             self._finalizar(t, resultado)
             with self.store.lock:
-                self.store.log(
-                    "reconciliacao", transfer_id=t.id, resultado=resultado.value
-                )
+                self.store.log("reconciliacao", transfer_id=t.id, resultado=resultado.value)
             resolvidas.append(t)
         return resolvidas
