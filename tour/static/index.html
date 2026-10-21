@@ -304,6 +304,15 @@ async function rodar(id, btn){
     pre.textContent = dados.output || JSON.stringify(dados);
     badge.className = 'badge ' + (dados.ok ? 'ok' : 'bad');
     badge.textContent = dados.ok ? '✓ SUCESSO' : '✗ FALHOU';
+    out.querySelectorAll('.img-resultado').forEach(el=>el.remove());
+    if(dados.imagem){
+      const img = document.createElement('img');
+      img.src = dados.imagem + '&t=' + Date.now();
+      img.className = 'img-resultado';
+      img.style.cssText = 'display:block;max-width:min(560px,100%);margin:0 14px 14px;'+
+        'border-radius:10px;border:1px solid var(--border);animation:pop .5s ease forwards';
+      out.appendChild(img);
+    }
   }catch(e){
     pre.textContent = 'Erro: '+e;
     badge.className = 'badge bad'; badge.textContent = '✗ ERRO';

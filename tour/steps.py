@@ -294,8 +294,41 @@ Critério: guardrails **100%** (inegociável), casos de LLM ≥ 70% (modelo pequ
         ],
     },
     {
+        "id": "preditiva",
+        "titulo": "14. Preditiva × Generativa (YOLO)",
+        "explicacao": """
+## Nem toda IA é generativa: análise não preditiva, preditiva e generativa
+
+- **Não preditiva** (descritiva/diagnóstica): *o que aconteceu e por quê* — extrato,
+  trilha de auditoria, dashboard de UNKNOWN. A verdade é o dado; valida-se com reconciliação.
+- **Preditiva** (ML discriminativo): *o que é isto / o que vai acontecer* — score de
+  fraude, e o nosso caso **KYC: "a selfie contém uma pessoa?"** com **YOLOv8**.
+  Saída = classe + confiança; valida-se com precision/recall e matriz de confusão.
+- **Generativa** (Lab 2): *produza algo novo* — não determinística; valida-se com
+  evals, groundedness e guardrails.
+
+O YOLO prevê, numa única passada, **classe + caixa + confiança** para cada objeto.
+Rode abaixo nas duas imagens e compare os vereditos — com a imagem anotada na tela.
+""",
+        "notas": """
+- Mensagem central: **cada família tem seu teste**. Descritiva → reconciliação; preditiva → matriz de confusão; generativa → evals. Errar a família = errar o controle.
+- YOLO = preditivo **discriminativo**: não escreve nada, classifica. Treinado no COCO (80 classes), yolov8n tem ~6 MB.
+- Rodar `bus.jpg` primeiro: pessoas detectadas com confiança; mostrar a imagem anotada com as caixas. Depois `formas.png`: nenhuma pessoa.
+- **O limiar de confiança é decisão de negócio** (recall × falso positivo) — igual ao limite de R$ 5.000 do PRD. Quem define é produto + risco.
+- Paralelo com a aula: golden dataset de imagens rotuladas = o "Gherkin" do modelo preditivo.
+- **Bônus real da preparação:** no formas.png o modelo viu o círculo verde como "frisbee" com 0.84 de confiança — **falso positivo ao vivo**. Use isso: para a pergunta "tem pessoa?" o veredito continua certo, mas mostra por que limiar e matriz de confusão existem.
+- Contraste de riscos: YOLO não alucina nem sofre injection; sofre **drift** e ataque adversarial. LLM é o inverso.
+- Mesma imagem + mesmo modelo + mesmo limiar ⇒ mesma resposta: dá para fazer teste de regressão clássico, diferente do LLM.
+""",
+        "arquivos": ["docs/analise-preditiva.md", "vision/detector.py"],
+        "acoes": [
+            {"id": "yolo_pessoa", "label": "🧍 Detectar em bus.jpg (tem pessoa?)", "demorado": True},
+            {"id": "yolo_nao_pessoa", "label": "🔷 Detectar em formas.png (sem pessoa)", "demorado": True},
+        ],
+    },
+    {
         "id": "fim",
-        "titulo": "14. Fechamento",
+        "titulo": "15. Fechamento",
         "explicacao": """
 ## IA acelera a implementação. Não transfere a responsabilidade.
 
@@ -333,6 +366,7 @@ TECNOLOGIAS = {
         {"icone": "📊", "nome": "Langfuse", "desc": "traces e evals"},
         {"icone": "🎨", "nome": "Langflow", "desc": "a mesma cadeia em canvas"},
         {"icone": "🐳", "nome": "Docker", "desc": "stack local reproduzível"},
+        {"icone": "🧍", "nome": "YOLOv8", "desc": "visão: análise preditiva"},
     ],
     "prd": [
         {"icone": "📄", "nome": "Docs-as-code", "desc": "PRD versionado junto do código"},
@@ -395,6 +429,12 @@ TECNOLOGIAS = {
         {"icone": "🏆", "nome": "Golden dataset", "desc": "14 casos versionados"},
         {"icone": "✅", "nome": "Checagem determinística", "desc": "guardrails: 100% ou reprova"},
         {"icone": "⚖️", "nome": "LLM-as-a-Judge", "desc": "informativo, nunca gate"},
+    ],
+    "preditiva": [
+        {"icone": "🧍", "nome": "YOLOv8", "desc": "classe + caixa + confiança numa passada"},
+        {"icone": "🔥", "nome": "PyTorch", "desc": "inferência local em CPU"},
+        {"icone": "📊", "nome": "Matriz de confusão", "desc": "o 'eval' do modelo preditivo"},
+        {"icone": "🎚", "nome": "Limiar de confiança", "desc": "decisão de negócio, não técnica"},
     ],
     "fim": [
         {"icone": "🏭", "nome": "Qualidade é a esteira", "desc": "não o commit"},

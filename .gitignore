@@ -11,4 +11,8 @@ evals/results/*.md
 !evals/results/exemplo-plano-b.md
 !evals/results/evidencia-*.md
 chatbot/.venv/
+vision/.venv/
+vision/out/
+vision/samples/
+vision/yolov8n.pt
 .DS_Store

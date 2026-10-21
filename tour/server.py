@@ -50,6 +50,15 @@ def file(path: str) -> dict:
     return {"path": path, "conteudo": alvo.read_text(encoding="utf-8")}
 
 
+@app.get("/api/imagem")
+def imagem(nome: str) -> FileResponse:
+    """Serve imagens anotadas geradas pelo lab de visao (somente vision/out)."""
+    alvo = REPO / "vision" / "out" / Path(nome).name  # Path().name impede traversal
+    if alvo.suffix.lower() not in (".jpg", ".jpeg", ".png") or not alvo.is_file():
+        raise HTTPException(404, "imagem não encontrada")
+    return FileResponse(alvo)
+
+
 @app.post("/api/run/{action_id}")
 def run(action_id: str) -> dict:
     acao = ACTIONS.get(action_id)

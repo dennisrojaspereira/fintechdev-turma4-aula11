@@ -197,6 +197,35 @@ def evals() -> dict:
     return _run([str(CHATBOT_PY), "evals/runner.py"], timeout=600)
 
 
+# ------------------------------------------------------------------ Visao (YOLO)
+VISION = REPO / "vision"
+VISION_PY = VISION / ".venv" / "Scripts" / "python.exe"
+if not VISION_PY.exists():
+    VISION_PY = VISION / ".venv" / "bin" / "python"
+
+
+def _yolo(imagem: str) -> dict:
+    if not VISION_PY.exists():
+        return {"ok": False, "output": "Lab de visao nao instalado. Rode: cd vision && "
+                                       "python -m venv .venv && pip install -r requirements.txt"}
+    prep = _run([str(VISION_PY), "samples.py"], cwd=VISION, timeout=180)
+    if not prep["ok"]:
+        return prep
+    r = _run([str(VISION_PY), "detector.py", imagem], cwd=VISION, timeout=300)
+    anotada = VISION / "out" / f"anotada-{Path(imagem).stem}.jpg"
+    if r["ok"] and anotada.exists():
+        r["imagem"] = f"/api/imagem?nome={anotada.name}"
+    return r
+
+
+def yolo_pessoa() -> dict:
+    return _yolo("samples/bus.jpg")
+
+
+def yolo_nao_pessoa() -> dict:
+    return _yolo("samples/formas.png")
+
+
 ACTIONS = {
     "bdd_tests": bdd_tests,
     "concurrency_implemented": concurrency_implemented,
@@ -211,4 +240,6 @@ ACTIONS = {
     "chat_injection": chat_injection,
     "chat_status": chat_status,
     "evals": evals,
+    "yolo_pessoa": yolo_pessoa,
+    "yolo_nao_pessoa": yolo_nao_pessoa,
 }
