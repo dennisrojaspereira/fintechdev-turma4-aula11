@@ -35,12 +35,12 @@ flowchart LR
 A cada era, a pergunta muda — e o **jeito de testar** muda junto.
 """,
         "notas": """
-- Abrir perguntando: **"quem já recebeu um PR gigante gerado por IA?"** — deixar 2 ou 3 responderem.
-- Vender a jornada: *"vamos subir a escada da IA ao vivo: descrever → prever → gerar → agir. Tem bug plantado, detecção de pessoa com YOLO e LLM rodando na GTX 1660 desta máquina."*
-- Tese que repete a aula inteira: **cada era tem sua pergunta E seu teste**. Errar o teste da era = incidente.
-- Conectar com as perguntas da turma (Matheus: throughput/testes; Renato: autonomia×segurança; Cauã: Greenfield; Cláudio: pipeline BMAD+BDD+SDD) — todas moram na era 4.
-- ⏱ ~5 min. Não detalhar tecnologia aqui; os cards são só um trailer.
-- **Plano de corte se o tempo apertar:** as 3 demos inegociáveis são (1) o bug de idempotência (p.14–15), (2) sem RAG × com RAG (p.4 e 16) e (3) a avaliação contraditória dos evals (p.18). O resto comprime.
+- A IA evoluiu de analisar informações para executar ações.
+- Antes precisávamos escrever tudo; agora precisamos validar o que foi gerado.
+- A TechPix vai nos ajudar a entender essa evolução.
+- Cada tipo de IA resolve problemas diferentes e exige testes diferentes.
+- Quanto mais autonomia, maior a responsabilidade sobre a qualidade.
+- 🎬 Plano de corte se o tempo apertar: bug de idempotência (p.14–15), sem RAG × com RAG (p.4 e 16), avaliação contraditória (p.18).
 """,
         "arquivos": ["README.md"],
         "acoes": [],
@@ -58,12 +58,12 @@ Antes de qualquer "inteligência": **fatos exatos** — extrato, auditoria, dash
 - Sem fatos confiáveis, as próximas eras constroem **sobre areia**.
 """,
         "notas": """
-- Frase de abertura: *"a era mais subestimada — e a que sustenta todas as outras."*
-- A demo roda transferências reais na API TechPix e deriva a análise (volume, contagens) da trilha imutável — agregação exata, não palpite.
-- Rodar a demo e apontar: cada evento é um **fato imutável** com timestamp; a análise é **agregação exata**, não palpite.
-- Pergunta retórica: *"isso é IA?"* — é analytics. E 80% do valor de dados em fintech ainda mora aqui (conciliação, fechamento contábil, BACEN).
-- Teste desta era: **reconciliação e pipeline de dados testada** — número errado aqui é bug de query, não de modelo.
-- Gancho para a era 2: *"descrever o passado não barra a fraude de amanhã. Para isso, precisamos prever."*
+- Antes de prever qualquer coisa, precisamos entender o que aconteceu.
+- Auditoria, relatórios, indicadores e conciliação são fundamentais em fintechs.
+- Nem todo problema precisa de inteligência artificial.
+- Dados incorretos geram decisões incorretas, independentemente do modelo utilizado.
+- Reconciliação é uma forma de validar a verdade financeira do sistema.
+- 🎬 Demo: "Auditoria + análise descritiva ao vivo" — transferências reais, trilha imutável e agregações derivadas.
 """,
         "arquivos": ["docs/analise-preditiva.md"],
         "acoes": [
@@ -83,12 +83,12 @@ Nosso caso KYC: **"a selfie contém uma pessoa?"**, com **YOLOv8 rodando local**
 - O teste desta era: **precision/recall + matriz de confusão**.
 """,
         "notas": """
-- YOLO = preditivo **discriminativo**: não escreve nada, classifica. COCO (80 classes), yolov8n com ~6 MB.
-- Rodar `bus.jpg`: 3 pessoas com confiança até 0.87 — mostrar a **imagem anotada** com as caixas. Depois `formas.png`: nenhuma pessoa.
-- **Bônus real da preparação:** no formas.png o modelo viu o círculo verde como "frisbee" com 0.84 — **falso positivo ao vivo**. Para a pergunta "tem pessoa?" o veredito segue certo, mas é por isso que limiar e matriz de confusão existem.
-- **O limiar de confiança é decisão de negócio** (recall × falso positivo) — igual ao limite de R$ 5.000 que veremos no PRD. Produto + risco decidem, não o dev.
-- Riscos desta era: **drift** (câmera/iluminação novas) e adversarial — não alucinação.
-- Gancho para a era 3: *"prever rótulos é poderoso, mas não conversa com o cliente nem escreve código. Entra a IA generativa."*
+- Modelos preditivos aprendem padrões a partir de dados.
+- YOLO identifica objetos e apresenta classificações com níveis de confiança.
+- Confiança estatística não significa certeza.
+- Precision e recall ajudam a entender falsos positivos e falsos negativos.
+- A escolha dos limites de confiança depende do risco do negócio.
+- 🎬 Demo: bus.jpg (3 pessoas, conf. 0.87, mostrar imagem anotada) → formas.png (nenhuma pessoa; o "frisbee 0.84" é um falso positivo real — use-o!).
 """,
         "arquivos": ["vision/detector.py"],
         "acoes": [
@@ -110,13 +110,12 @@ Ele vai responder algo **plausível**. E plausível ≠ correto.
 - Domar isso é o **Ato 3** da aula.
 """,
         "notas": """
-- Rodar a pergunta SEM RAG e saborear a resposta: um valor plausível, confiante e **sem evidência nenhuma**. (Se a stack do Lab 2 estiver fora: plano B em docs/plano-b.md, não consertar ao vivo.)
-- Nomear o fenômeno: **alucinação** — não é bug do modelo, é a natureza dele: gerar o provável, não o verdadeiro.
-- *Cliffhanger explícito:* **"guardem essa resposta errada. No Ato 3 voltamos com RAG, guardrails e evals para domar exatamente isso."**
-- Trade-offs de rodar local (Ollama, qwen2.5:3b na GTX 1660): custo por token zero, dado não sai da máquina × qualidade menor que API hospedada.
-- **Lost in the middle / dumb zone (teoria, tecla T):** a janela de contexto tem geografia — recall em U (meio do prompt some) e degradação por ocupação (janela cheia = modelo mais burro bem antes do limite). É por isso que o RAG usa top-4 e não top-20, e por que a pergunta vai por último no prompt.
-- **SLM × LLM (teoria, tecla T):** mesma arquitetura, escalas diferentes — o que muda é o que *emerge* (instruções longas, raciocínio, calibração). Nosso 3B é um **SLM**: tudo que ele errar hoje (citação, juiz ruidoso) é característico. Padrão de mercado: **cascata** — SLM nos 80% baratos, LLM nos 20% difíceis. E quanto menor o modelo, mais o sistema em volta (RAG/guardrails/evals) carrega a qualidade.
-- Gancho para a era 4: *"e se, em vez de responder FAQ, essa IA escrever o sistema de pagamento?"*
+- Modelos generativos produzem conteúdo a partir dos padrões aprendidos.
+- Uma resposta convincente não significa uma resposta correta.
+- Alucinações aparecem quando o modelo gera informações sem sustentação adequada.
+- Lost in the Middle e degradação do contexto afetam a recuperação e o uso das informações.
+- SLMs e LLMs apresentam diferentes capacidades, custos e limitações.
+- 🎬 Demo: smoke test antes de prometer; depois "perguntar o limite SEM dados" — guardar a resposta errada para o passo 16. (Teoria na tecla T: lost in the middle, dumb zone, SLM × LLM. Plano B: docs/plano-b.md.)
 """,
         "arquivos": ["chatbot/app/rag.py"],
         "acoes": [
@@ -146,11 +145,11 @@ flowchart LR
 ```
 """,
         "notas": """
-- Este é o pivô da aula: fim do "tour pelas eras", começo da engenharia. Respirar.
-- Contar: a TechPix (fintech fictícia) foi construída exatamente assim — agentes implementaram, a esteira validou. Incluindo um bug que **só o teste certo pega**.
-- Responde o espírito das 4 perguntas da turma: a era 4 não é um produto, é um **modo de produção** — e exige esteira própria.
-- Anunciar o Ato 2: *"vamos percorrer a fábrica: PRD → ADR → spec → BDD → agentes com limites → API → e um bug plantado que 25 testes verdes NÃO pegam."*
-- Dica de ritmo: daqui até o passo 15 é o coração dos 40 min de lab. ⏱
+- Agentes combinam modelos, ferramentas, memória ou estado e execução de ações.
+- Conseguem consultar arquivos, modificar código, executar testes e interpretar resultados.
+- Existe diferença entre gerar uma resposta e executar uma operação.
+- O gargalo começa a migrar da implementação para a validação.
+- Autonomia precisa de limites, rastreabilidade e supervisão.
 """,
         "arquivos": [".agents/orchestration.md"],
         "acoes": [],
@@ -169,11 +168,11 @@ Sem código legado, a verdade é **construída** — e a fonte é o **PRD**.
 - Dinheiro em **centavos (int)** — float em valor monetário é defeito.
 """,
         "notas": """
-- Responde a pergunta do **Cauã**: no Greenfield a verdade é **construída** — PRD + ADRs + contratos + cenários de aceite + baselines.
-- Contraponto Brownfield: a verdade vem de código + contratos + incidentes — e **legado também mente** (produção ≠ especificação correta).
-- Destacar no arquivo: dinheiro em **centavos (int)** — float em dinheiro é defeito, não estilo.
-- **RNF-01 é a estrela da noite**: N requisições concorrentes com a mesma chave ⇒ exatamente 1 débito. Guardem.
-- Mostrar a seção de riscos: o R1 literalmente prevê o bug que vamos plantar.
+- Um pedido de negócio não representa necessariamente um requisito completo.
+- Precisamos explicitar regras, restrições e comportamentos esperados.
+- Em Greenfield, a referência de verdade precisa ser construída.
+- Requisitos não funcionais também representam regras críticas de negócio.
+- Agentes não devem inventar decisões quando existem lacunas no requisito.
 """,
         "arquivos": ["docs/prd.md"],
         "acoes": [],
@@ -191,10 +190,11 @@ Agentes implementam rápido demais para decisões implícitas.
 - Dinheiro/segurança ⇒ **aprovação humana** antes do agente implementar.
 """,
         "notas": """
-- ADR que afeta dinheiro/segurança exige **aprovação humana** antes do agente implementar.
-- O ADR é o que faz um agente (ou dev) novo entender o "porquê" em 2 minutos — contexto barato para o próximo prompt.
-- Abrir o ADR-0002 e ler só a frase da decisão: checagem + reserva **na mesma operação crítica**.
-- ADR-0003 (UNKNOWN): plantar a semente — "timeout não é sucesso nem falha" — volta no passo 13.
+- Nem toda decisão técnica deve ficar escondida no código.
+- ADRs registram contexto, alternativas, decisões e consequências.
+- Agentes precisam entender por que determinada solução foi escolhida.
+- Idempotência exige garantias de atomicidade, especialmente sob concorrência.
+- Decisões críticas de segurança e dinheiro precisam de governança.
 """,
         "arquivos": ["docs/adr/0002-idempotencia-atomica.md", "docs/adr/0003-estados-e-reconciliacao.md"],
         "acoes": [],
@@ -212,10 +212,11 @@ A spec traduz o PRD em **contrato verificável**, rastreável de ponta a ponta.
 - Rastreabilidade: **PRD ⇄ spec ⇄ cenário BDD ⇄ teste**.
 """,
         "notas": """
-- A tabela de casos é literalmente o roteiro dos testes de integração — mostrar 2 linhas (idempotência e limite).
-- Exemplo de invariante para citar: **I-1, dinheiro não é criado nem destruído** — vale para qualquer execução, não para um exemplo.
-- **Invariantes = oráculos independentes**: o teste deriva do requisito, não do código. Se implementação e teste nascem do mesmo lugar, os dois erram juntos — pergunta do Cláudio.
-- Provedor simulado **determinístico** (valor terminado em 99 ⇒ timeout): reproduzível, sem flakiness. Em produção seria um test double do SPI.
+- SDD transforma requisitos em especificações rastreáveis.
+- Contratos precisam definir entradas, saídas, erros e invariantes.
+- Uma implementação correta precisa respeitar o comportamento esperado.
+- Testes não devem simplesmente copiar a lógica da implementação.
+- Rastreabilidade conecta requisito, decisão arquitetural, especificação e validação.
 """,
         "arquivos": ["specs/pix-transfer.md"],
         "acoes": [],
@@ -232,10 +233,12 @@ Cenários Gherkin **em português**, executáveis via pytest-bdd.
 - Spec mudou e o código não? O cenário **quebra** — documentação viva não mente.
 """,
         "notas": """
-- Abrir o `.feature` primeiro: linguagem de negócio, legível por produto/QA/dev/**agente** — todos leem o mesmo contrato.
-- Clicar **Executar** e mostrar os 7 cenários verdes contra a API real.
-- História real da preparação: o cenário de duplicidade **falhou** porque a chave de teste tinha 7 caracteres e o contrato exige 8–64 — o gate pegou erro **do próprio teste**. Vale contar.
-- Gancho para o Cláudio: BDD é a camada "comportamento" da pipeline BMAD+SDD+BDD dele.
+- BDD aproxima produto, desenvolvimento e qualidade.
+- Gherkin permite descrever comportamentos com exemplos concretos.
+- Cenários de aceitação ajudam a eliminar ambiguidades.
+- Testes executáveis funcionam como documentação viva.
+- Cenários verdes não significam cobertura completa das regras de negócio.
+- 🎬 Demo: rodar os 7 cenários BDD contra a API real.
 """,
         "arquivos": ["features/pix-transfer.feature", "tests/test_bdd.py"],
         "acoes": [
@@ -263,12 +266,11 @@ flowchart LR
 ```
 """,
         "notas": """
-- Explicar cada camada: rules = o que NUNCA fazer (float em dinheiro, segredo no repo, desligar gate); skills = procedimentos repetíveis (rodar gates, criar ADR); agentes = papéis com entrada/saída/ferramentas delimitadas.
-- Responde o **Renato** (autonomia × segurança): pré-aprovar operações seguras (testes, lint, leitura), exigir humano para destrutivas/segredos/deploy/merge — **nunca** bypass irrestrito.
-- Responde o **Matheus** (worktrees/paralelismo): 1 worktree por tarefa, contratos read-only, 1 agente por arquivo quente, integração via PR. Paralelismo não elimina dependência — pode aumentar retrabalho.
-- Detalhe que rende discussão: o Testador **não lê a implementação**. Por quê? Oráculo independente.
-- Mostrar a tabela de papéis no orchestration.md.
-- Pergunta para a turma: *"quais permissões vocês dariam ao agente no terminal de vocês?"*
+- Rules definem restrições que precisam ser respeitadas.
+- Skills representam procedimentos reutilizáveis.
+- Agentes possuem responsabilidades, ferramentas e permissões específicas.
+- Separar implementação e testes ajuda a construir validações independentes.
+- Autonomia deve ser proporcional ao risco das operações.
 """,
         "arquivos": [".agents/orchestration.md", ".agents/rules/engenharia.md", ".agents/rules/seguranca.md"],
         "acoes": [],
@@ -299,12 +301,11 @@ flowchart LR
 **Este repositório é o exemplo:** 6 arquivos planos, construídos por agentes.
 """,
         "notas": """
-- Validar a dor: *"vocês estão certos — o agente se perde mesmo. Mas separem princípio de cerimônia."*
-- Os 6 critérios AI-friendly (na página aberta abaixo): fatias verticais, screaming architecture (`transfers/`, nunca `utils/impl/`), indireção só com 2ª implementação, convenção previsível (teste do lado, sem barrel files), **CLAUDE.md como GPS**, feedback loop rápido.
-- Fórmula para fixar: custo p/ agente ≈ nº de arquivos para entender 1 comportamento × tamanho. Otimizem isso.
-- Skills recomendadas: `/init` para gerar o CLAUDE.md; rules e skills de projeto (mostrar `.agents/` deste repo); subagentes com papéis; worktrees.
-- Regra de bolso de fechamento: *"se um estagiário acha o arquivo certo em 30 s pelos nomes de pasta, o agente também acha."*
-- Microserviços/CQRS/event sourcing: quando o problema pedir — evolução, não ponto de partida. Complexidade especulativa custa dobrado: para criar e em tokens para sempre.
+- Arquitetura também influencia o consumo de contexto dos agentes.
+- Muitas abstrações podem dificultar a navegação e a compreensão do sistema.
+- Clean Architecture não significa criar camadas desnecessárias.
+- Fatias verticais ajudam a organizar funcionalidades por comportamento de negócio.
+- Precisamos equilibrar separação de responsabilidades, simplicidade e evolução.
 """,
         "arquivos": ["docs/arquitetura-para-agentes.md"],
         "acoes": [],
@@ -322,10 +323,12 @@ A demo executa a API TechPix e mostra **requisição → resposta** de cada caso
 - Mesma chave, payload diferente ⇒ **409**
 """,
         "notas": """
-- Clicar e narrar devagar as 3 requisições: 201 → 200 (mesmo `id`! sem novo débito) → 409.
-- Apontar o saldo final da Alice: começou com 1.000.000, debitou **uma** vez (985.000).
-- Código de erro **estável** (`conflito_idempotencia`) = contrato, não mensagem solta — é o que permite cliente e testes reagirem programaticamente.
-- Se perguntarem do armazenamento: memória com lock, atrás de interface. **Dizer explicitamente:** o lock só protege **um processo** — com réplicas em produção, a idempotência exige garantia persistente e compartilhada: transação + `UNIQUE(idempotency_key)` / `INSERT ... ON CONFLICT` (ADR-0001, architecture.md).
+- Uma transferência precisa respeitar contratos e regras financeiras.
+- Idempotência evita que a repetição de uma requisição gere nova operação.
+- A mesma chave com conteúdo diferente deve produzir um conflito.
+- Códigos HTTP e erros estáveis fazem parte do contrato.
+- Testes sequenciais não garantem comportamento correto sob concorrência.
+- 🎬 Demo: sucesso (201) → mesma chave (200, mesmo id, sem novo débito) → payload diferente (409); apontar o saldo da Alice debitado uma vez.
 """,
         "arquivos": ["src/techpix/api.py"],
         "acoes": [
@@ -355,11 +358,12 @@ stateDiagram-v2
 ```
 """,
         "notas": """
-- Perguntar antes de clicar: *"timeout do provedor: vocês estornam ou confirmam?"* — deixar errarem; a resposta é **nenhum dos dois**.
-- Narrar a demo: 202 UNKNOWN → valor reservado (nada no Bruno) → retry seguro (200, mesma transferência) → reconciliação resolve → reserva zerada, Bruno creditado.
-- Invariante I-1 em ação: nenhum caminho de timeout cria ou destrói dinheiro.
-- Callback da era 1: a reconciliação é **análise descritiva** operando como rede de segurança.
-- Frase de efeito: **UNKNOWN não é erro — é honestidade do sistema + processo para resolver.**
+- Timeout não significa necessariamente que uma operação falhou.
+- Sistemas financeiros precisam representar estados de incerteza.
+- Confirmar ou estornar sem evidência pode gerar inconsistências.
+- Retry seguro depende de idempotência.
+- Reconciliação permite resolver operações cujo resultado ainda é desconhecido.
+- 🎬 Demo: valor 10099 ⇒ 202 UNKNOWN (reservado) → retry seguro (200) → reconciliação resolve e credita.
 """,
         "arquivos": ["docs/adr/0003-estados-e-reconciliacao.md"],
         "acoes": [
@@ -379,11 +383,12 @@ A branch `implemented` tem o clássico **check-then-act**: checa a chave e só g
 - O oráculo que pega deriva do **PRD (RNF-01)**: 8 threads, mesma chave ⇒ **1 débito**.
 """,
         "notas": """
-- **Clímax da aula.** Ordem: (1) diff, (2) teste falhando.
-- No diff, apontar: o bug cabe em ~10 linhas e **parece inocente** — checagem fora do lock + "ida ao banco" no meio. Review humano cansado deixa passar.
-- Antes de rodar, lembrar: 25 testes passam nessa branch. Coverage alto. Tudo verde — menos o oráculo de concorrência.
-- Rodar e ler em voz alta: **"RNF-01 violado: 8 transferências efetivadas para a mesma chave"** — débito de R$ 800 em vez de R$ 100.
-- Pergunta do **Matheus** (como testar throughput de código de agente): não é "mais testes", é **o teste certo derivado do requisito** + barreira para tornar a corrida determinística.
+- Testes verdes não garantem ausência de defeitos críticos.
+- Check-then-act cria uma janela de corrida entre verificação e execução.
+- Requisições simultâneas podem passar pela mesma validação.
+- Uma operação de R$ 100 pode resultar em múltiplos débitos indevidos.
+- O teste correto deve derivar do requisito de concorrência.
+- 🎬 Demo: primeiro o diff (o bug parece inocente); depois o teste na branch com bug — ler em voz alta: "RNF-01 violado: 8 transferências efetivadas".
 """,
         "arquivos": [],
         "acoes": [
@@ -403,11 +408,12 @@ A correção (ADR-0002): checagem, reserva e débito na **mesma seção crítica
 - Em produção: transação + `UNIQUE(idempotency_key)`.
 """,
         "notas": """
-- Rodar o mesmo teste na versão corrigida: **passa** — não por sorte de timing, por construção.
-- Rodar os gates completos (se o tempo permitir): 26/26 + ruff + bandit. No CI entram gitleaks (secrets) — e o merge ainda exige **revisão humana**.
-- Responder: *"100% de cobertura garante segurança financeira?"* **Não** — cobertura mede o que o teste executa, não o que ele verifica.
-- **Transição para o Ato 3:** *"lembram da resposta alucinada da era 3? Hora de pagar essa dívida: a mesma disciplina, aplicada à IA que gera."*
-- ⏱ Atrasado? Pule o botão de gates completos.
+- Precisamos corrigir a causa do problema, não apenas seus sintomas.
+- Atomicidade impede que múltiplas operações efetivem a mesma transferência.
+- Locks locais não resolvem sozinhos problemas distribuídos.
+- Quality gates combinam testes, análise estática e verificações de segurança.
+- Cobertura mede execução de código, não necessariamente correção de negócio.
+- 🎬 Demo: mesmo teste na versão corrigida passa; gates completos (26 testes + lint) se houver tempo.
 """,
         "arquivos": ["src/techpix/service.py", ".github/workflows/quality.yml"],
         "acoes": [
@@ -435,11 +441,12 @@ flowchart LR
 ```
 """,
         "notas": """
-- Callback explícito: *"lembram do chute do passo 4? Mesma pergunta, agora com RAG."* Rodar e comparar: R$ 5.000 citando `[limites]`.
-- Fechar o paralelo do lifecycle: para o chatbot, a **base de conhecimento é a spec** — e a resposta certa aponta a evidência, como o teste aponta o requisito.
-- Mostrar que a resposta traz `fontes` — contrato de citação que os evals vão checar.
-- Stack em uma frase cada: Ollama (inferência local), LangChain (cadeia em código), pgvector (busca vetorial), Langfuse (traces em http://localhost:3000), Langflow (mesma cadeia em canvas, http://localhost:7860).
-- Langflow ≠ substituto de engenharia: outra **interface** para a mesma cadeia — canvas não dá guardrail, teste nem CI de graça.
+- LLMs não conhecem automaticamente as informações internas da empresa.
+- RAG recupera documentos relevantes antes de gerar uma resposta.
+- Embeddings permitem representar informações para busca por similaridade.
+- Recuperar o documento correto não garante interpretação correta.
+- LangChain, Langflow, Ollama e Langfuse possuem responsabilidades diferentes na solução.
+- 🎬 Demo: relembrar o chute sem RAG → com RAG responde R$ 5.000 citando [limites]. Langfuse em localhost:3000, Langflow em localhost:7860.
 """,
         "arquivos": ["chatbot/app/rag.py"],
         "acoes": [
@@ -469,11 +476,12 @@ flowchart LR
 ```
 """,
         "notas": """
-- Rodar os dois bloqueios e apontar `"modo": "guardrail"` e o tempo ~0 s: **o modelo nem foi chamado**.
-- Mensagem central: regra financeira crítica é **determinística** — não se pede "por favor" para o LLM obedecer.
-- Três camadas: determinística (gate) → avaliação por LLM (informativa) → revisão humana (amostral).
-- Existe guardrail de **saída** também: CPF ou "transferência realizada" na resposta ⇒ bloqueio (mostrar no guardrails.py se pedirem).
-- Amarra com o Ato 2: o bot **informa**; quem transfere é a API com idempotência. Separação informar × executar.
+- Nem toda decisão deve ser delegada a um modelo probabilístico.
+- Guardrails podem atuar antes e depois da geração.
+- Regras determinísticas permitem bloquear operações fora do escopo.
+- Prompt injection tenta manipular o comportamento esperado do sistema.
+- Guardrails complementam, mas não substituem autorização e segurança da aplicação.
+- 🎬 Demo: pedir transferência e tentar injection — bloqueio em ~0 s, "modo": "guardrail" (o LLM nem é chamado).
 """,
         "arquivos": ["chatbot/app/guardrails.py"],
         "acoes": [
@@ -495,14 +503,12 @@ flowchart LR
 Quem está certo?
 """,
         "notas": """
-- Rodar e usar os ~40 s para explicar as três réguas enquanto a tela rola.
-- Contexto do dataset: 14 casos — conhecidas, fora da base, injeção, PII, transferência, citação. Resposta da provocação: **avaliadores diferentes medem propriedades diferentes** — divergência não vira média, vira revisão humana.
-- **A provocação central:** *"8 de 9 passaram na heurística — e o juiz deu nota baixa em algumas. Quem está certo?"* Resposta: os dois — medem coisas diferentes. Heurística = o termo apareceu; juiz = a resposta é sustentada pelos trechos. **Nunca apresentar um % único como qualidade global.**
-- **Caso q03 (real):** retrieval trouxe o chunk certo do limite noturno e o Qwen 3B respondeu que o limite "permanece constante" — **falha de groundedness** que a heurística pegou. Teste manual de 2 perguntas nunca pegaria.
-- O juiz agora recebe os **trechos recuperados** (não só nomes de fontes) e responde **JSON validado 0–10** — mesmo assim: juiz 3B é informativo, **nunca gate**. Determinístico decide; juiz sinaliza; humano arbitra.
-- Detalhe fino: o campo `fontes` da API só lista fontes **citadas no texto** — recuperar um documento ≠ fundamentar a resposta nele.
-- Amarra com o **Matheus**: validar código gerado em escala e validar respostas geradas é o MESMO problema — escolher o oráculo certo para cada propriedade.
-- Fechar o paralelo das eras em voz alta — é a ponte para o fechamento.
+- Respostas de IA generativa também precisam de testes de regressão.
+- Evals representam conjuntos de perguntas, expectativas e critérios de avaliação.
+- Heurísticas verificam propriedades específicas, mas podem não detectar erros semânticos.
+- LLM as a Judge utiliza outro modelo para avaliar respostas e também pode errar.
+- Observabilidade e avaliações contínuas ajudam a identificar degradação de qualidade.
+- 🎬 Demo: rodar os 14 evals (~40 s); destacar o q03 (groundedness real) e a divergência heurística × juiz — divergência vira revisão humana, não média.
 """,
         "arquivos": ["evals/dataset.json", "evals/results/evidencia-2026-10-21.md"],
         "acoes": [
@@ -530,15 +536,11 @@ Quanto mais autonomia a IA ganha, **mais engenharia de validação** ela exige.
 > **Qualidade é propriedade da esteira, não do commit.**
 """,
         "notas": """
-- Recapitular os 4 pilares em voz alta: fonte de verdade explícita, oráculos independentes, gates em camadas, decisões humanas obrigatórias.
-- Fechar respondendo nominalmente as 4 perguntas da turma (Matheus, Renato, Cauã, Cláudio) em 1 frase cada — tudo foi demonstrado ao vivo.
-- Reprisar a tabela apontando as demos: auditoria (p.2), YOLO/frisbee (p.3), chute vs RAG (p.4 e 16), bug RNF-01 (p.14).
-- Perguntas de discussão (escolher 2):
-  - *Onde a automação deve parar para uma decisão humana no contexto de vocês?*
-  - *Qual é a "chave de idempotência" do processo de vocês — o invariante que ninguém testou ainda?*
-  - *Se IA escreve implementação E testes, como evitar que ambos estejam errados juntos?* (oráculo do requisito + papéis separados)
-- Última frase: **qualidade é propriedade da esteira, não do commit.**
-- Repo no GitHub: branches starter → implemented → validated para reproduzirem em casa.
+- Análise descritiva exige dados confiáveis e reconciliação.
+- Modelos preditivos exigem avaliação estatística de seus resultados.
+- IA generativa exige fundamentação, guardrails, evals e observabilidade.
+- Agentes exigem requisitos explícitos, validações independentes e governança.
+- A IA acelera a implementação, mas a qualidade continua sendo responsabilidade da engenharia.
 """,
         "arquivos": ["docs/analise-preditiva.md"],
         "acoes": [],
