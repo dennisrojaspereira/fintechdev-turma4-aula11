@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula 11 — Tour TechPix</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161a23; --panel2:#1d2230; --border:#2a3042;
+    --text:#e8eaf2; --muted:#8b93a7; --accent:#4f8cff; --ok:#3ecf8e; --bad:#ff6b6b;
+    --code:#12151d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+  nav{width:300px;min-width:300px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:14px}
+  nav h1{font-size:15px;margin:4px 8px 14px;color:var(--muted);font-weight:600;letter-spacing:.4px}
+  nav button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--text);
+    padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;margin-bottom:2px;line-height:1.35}
+  nav button:hover{background:var(--panel2)}
+  nav button.ativo{background:var(--accent);color:#fff;font-weight:600}
+  main{flex:1;overflow-y:auto;padding:34px 48px 80px;max-width:1100px}
+  main h2{font-size:30px;margin:0 0 4px}
+  .expl{font-size:16.5px;line-height:1.65}
+  .expl h2{font-size:22px;margin-top:26px;color:var(--accent)}
+  .expl strong{color:#fff}
+  .expl code{background:var(--code);padding:2px 6px;border-radius:5px;font-size:.9em}
+  .expl ul{padding-left:22px}
+  .expl li{margin:5px 0}
+  details{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:10px 0}
+  details summary{cursor:pointer;padding:10px 14px;font-family:Consolas,monospace;font-size:13px;color:var(--accent)}
+  details pre{margin:0;padding:14px;overflow-x:auto;background:var(--code);border-radius:0 0 10px 10px;
+    font-size:12.5px;line-height:1.5;max-height:460px;overflow-y:auto}
+  .acoes{margin-top:22px}
+  .acao{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0}
+  .acao button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 18px;
+    font-size:14.5px;font-weight:600;cursor:pointer}
+  .acao button:disabled{opacity:.5;cursor:wait}
+  .saida{display:none;margin-top:12px;background:var(--code);border-radius:8px;padding:14px;
+    font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;white-space:pre-wrap;
+    max-height:480px;overflow-y:auto;border-left:4px solid var(--muted)}
+  .saida.ok{border-left-color:var(--ok)} .saida.bad{border-left-color:var(--bad)}
+  .rodape{position:fixed;bottom:0;left:300px;right:0;background:var(--panel);border-top:1px solid var(--border);
+    padding:10px 48px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+  .rodape button{background:var(--panel2);color:var(--text);border:1px solid var(--border);
+    border-radius:8px;padding:8px 20px;cursor:pointer;font-size:14px}
+  .spin{display:inline-block;margin-left:8px;color:var(--muted);font-size:13px}
+  @media (max-width:760px){nav{display:none}.rodape{left:0;padding:10px 16px}main{padding:20px 16px 80px}}
+</style>
+</head>
+<body>
+<nav id="menu"><h1>AULA 11 · ENG. DE SOFTWARE COM AGENTES</h1></nav>
+<main id="conteudo"></main>
+<div class="rodape">
+  <button onclick="navegar(-1)">← Anterior</button>
+  <span id="pos"></span>
+  <button onclick="navegar(1)">Próximo →</button>
+</div>
+<script>
+let passos = [], atual = 0;
+
+const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+async function init(){
+  passos = await (await fetch('/api/steps')).json();
+  const menu = document.getElementById('menu');
+  passos.forEach((p,i)=>{
+    const b = document.createElement('button');
+    b.textContent = p.titulo; b.onclick = ()=>mostrar(i);
+    b.id = 'nav'+i; menu.appendChild(b);
+  });
+  mostrar(0);
+}
+
+function navegar(d){ mostrar(Math.min(Math.max(atual+d,0),passos.length-1)); }
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight') navegar(1);
+  if(e.key==='ArrowLeft') navegar(-1);
+});
+
+async function mostrar(i){
+  atual = i;
+  const p = passos[i];
+  document.querySelectorAll('nav button').forEach((b,j)=>b.classList.toggle('ativo', j===i));
+  document.getElementById('pos').textContent = `${i+1} / ${passos.length}`;
+  const main = document.getElementById('conteudo');
+
+  let html = `<div class="expl">${marked.parse(p.explicacao)}</div>`;
+
+  if(p.arquivos.length){
+    html += `<h3 style="color:var(--muted);font-size:13px;letter-spacing:.5px;margin-top:28px">ARQUIVOS DESTE PASSO</h3>`;
+    p.arquivos.forEach((a,j)=>{
+      html += `<details id="arq${j}" data-path="${a}"><summary>📄 ${a}</summary><pre>carregando…</pre></details>`;
+    });
+  }
+  if(p.acoes.length){
+    html += `<div class="acoes"><h3 style="color:var(--muted);font-size:13px;letter-spacing:.5px">AO VIVO</h3>`;
+    p.acoes.forEach(a=>{
+      html += `<div class="acao">
+        <button onclick="rodar('${a.id}', this)">${a.label}</button>
+        ${a.demorado ? '<span class="spin">pode levar de segundos a ~1 min</span>' : ''}
+        <div class="saida" id="out-${a.id}"></div></div>`;
+    });
+    html += `</div>`;
+  }
+  main.innerHTML = html;
+  main.scrollTop = 0;
+
+  p.arquivos.forEach(async (a,j)=>{
+    const det = document.getElementById('arq'+j);
+    det.addEventListener('toggle', async ()=>{
+      const pre = det.querySelector('pre');
+      if(det.open && pre.dataset.carregado!=='1'){
+        const r = await fetch('/api/file?path='+encodeURIComponent(a));
+        const d = await r.json();
+        pre.textContent = d.conteudo || d.detail;
+        pre.dataset.carregado = '1';
+      }
+    }, {once:false});
+  });
+}
+
+async function rodar(id, btn){
+  const out = document.getElementById('out-'+id);
+  btn.disabled = true;
+  out.style.display = 'block'; out.className = 'saida';
+  out.textContent = '⏳ executando de verdade nesta máquina…';
+  try{
+    const r = await fetch('/api/run/'+id, {method:'POST'});
+    const d = await r.json();
+    out.textContent = d.output || JSON.stringify(d);
+    out.className = 'saida ' + (d.ok ? 'ok' : 'bad');
+  }catch(e){
+    out.textContent = 'Erro: '+e; out.className = 'saida bad';
+  }
+  btn.disabled = false;
+}
+init();
+</script>
+</body>
+</html>
