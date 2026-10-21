@@ -147,6 +147,49 @@ def api_unknown() -> dict:
     return {"ok": True, "output": "\n\n".join(linhas)}
 
 
+def api_auditoria() -> dict:
+    """Analise DESCRITIVA (nao preditiva): fatos exatos + agregacoes sobre a trilha."""
+    sys.path.insert(0, str(REPO / "src"))
+    from collections import Counter
+
+    from fastapi.testclient import TestClient
+
+    from techpix.api import create_app
+
+    client = TestClient(create_app())
+    ops = [
+        ("k-era1-sucesso-a", 15_000), ("k-era1-sucesso-b", 7_500),
+        ("k-era1-timeout-1", 10_099), ("k-era1-sucesso-c", 2_000),
+    ]
+    for chave, valor in ops:
+        client.post(
+            "/transfers",
+            json={"origem": "acc-alice", "destino": "acc-bruno", "valor_centavos": valor},
+            headers={"Idempotency-Key": chave},
+        )
+    client.post("/admin/reconcile")
+
+    eventos = client.get("/audit").json()
+    linhas = ["TRILHA DE AUDITORIA (fatos imutaveis, em ordem):", ""]
+    for e in eventos:
+        extras = {k: v for k, v in e.items() if k not in ("ts", "evento")}
+        linhas.append(f"  {e['evento']:<24} {json.dumps(extras, ensure_ascii=False)}")
+
+    contagem = Counter(e["evento"] for e in eventos)
+    efetivadas = [e for e in eventos if e["evento"] == "transferencia_efetivada"]
+    total = sum(e["valor_centavos"] for e in efetivadas)
+    linhas += [
+        "",
+        "ANALISE DESCRITIVA (o que aconteceu — agregacao exata, sem modelo):",
+        f"  transferencias efetivadas: {len(efetivadas)}",
+        f"  volume movimentado:        R$ {total / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+        f"  eventos por tipo:          {dict(contagem)}",
+        "",
+        "Nenhuma previsao aqui: a 'verdade' e o proprio dado. Valida-se com reconciliacao.",
+    ]
+    return {"ok": True, "output": "\n".join(linhas)}
+
+
 # ------------------------------------------------------------------ Lab 2
 def _chat(pergunta: str, usar_rag: bool) -> dict:
     try:
@@ -234,6 +277,7 @@ ACTIONS = {
     "diff_bug": diff_bug,
     "api_fluxo": api_fluxo,
     "api_unknown": api_unknown,
+    "api_auditoria": api_auditoria,
     "chat_sem_rag": chat_sem_rag,
     "chat_rag": chat_rag,
     "chat_guardrail": chat_guardrail,

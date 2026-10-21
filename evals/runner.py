@@ -55,23 +55,37 @@ def checar(caso: dict, resp: dict) -> tuple[bool, list[str]]:
     return (not falhas, falhas)
 
 
-def julgar(pergunta: str, resposta: str, fontes: list[str]) -> int | None:
-    """LLM-as-a-Judge local: groundedness 0-10. Retorna None se indisponivel."""
+def julgar(pergunta: str, resposta: str, trechos: list[dict]) -> int | None:
+    """LLM-as-a-Judge local: groundedness 0-10 contra os TRECHOS recuperados.
+
+    O juiz recebe as evidencias textuais (nao apenas nomes de fontes) e deve
+    responder JSON estruturado, validado aqui. Retorna None se indisponivel ou
+    se a saida nao for um score valido — None nunca vira nota.
+    """
+    evidencias = "\n\n".join(
+        f"[{t['fonte']}]\n{t['texto']}" for t in (trechos or [])
+    ) or "(nenhum trecho recuperado)"
     prompt = (
-        "Avalie de 0 a 10 se a RESPOSTA se mantém fiel ao tema da PERGUNTA sobre o "
-        "serviço Pix de uma fintech, sem inventar números ou políticas. Responda "
-        f"APENAS o número.\nPERGUNTA: {pergunta}\nRESPOSTA: {resposta}\nFONTES: {fontes}"
+        "Você é um avaliador de groundedness. Dê uma nota de 0 a 10 para o quanto a "
+        "RESPOSTA é sustentada EXCLUSIVAMENTE pelas EVIDÊNCIAS abaixo (0 = contradiz "
+        "ou inventa; 10 = tudo na resposta está nas evidências). Responda APENAS um "
+        'JSON no formato {"score": N}, sem mais nada.\n\n'
+        f"PERGUNTA: {pergunta}\n\nRESPOSTA: {resposta}\n\nEVIDÊNCIAS:\n{evidencias}"
     )
     try:
         r = httpx.post(
             f"{OLLAMA_URL}/api/generate",
-            json={"model": JUDGE_MODEL, "prompt": prompt, "stream": False},
+            json={"model": JUDGE_MODEL, "prompt": prompt, "stream": False,
+                  "format": "json"},
             timeout=120,
         )
         r.raise_for_status()
-        digitos = [c for c in r.json().get("response", "") if c.isdigit()]
-        return min(int("".join(digitos[:2]) or "0"), 10) if digitos else None
-    except (httpx.HTTPError, ValueError):
+        bruto = json.loads(r.json().get("response", "{}"))
+        score = bruto.get("score")
+        if isinstance(score, (int, float)) and 0 <= score <= 10:
+            return int(score)
+        return None
+    except (httpx.HTTPError, ValueError, TypeError):
         return None
 
 
@@ -103,7 +117,9 @@ def main() -> int:
 
             score_juiz = None
             if USE_JUDGE and not erro and caso["tipo"] == "llm" and not resp.get("bloqueado"):
-                score_juiz = julgar(caso["pergunta"], resp.get("resposta", ""), resp.get("fontes", []))
+                score_juiz = julgar(
+                    caso["pergunta"], resp.get("resposta", ""), resp.get("trechos", [])
+                )
 
             resultados.append(
                 {
@@ -136,17 +152,29 @@ def main() -> int:
                     "resultados": resultados}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    juizes = [r["score_juiz"] for r in llm if r["score_juiz"] is not None]
     linhas = [
         f"# Relatório de evals — {carimbo}",
         "",
-        f"- Determinísticos (guardrails/contratos): {'✅ 100%' if det_ok else '❌ FALHOU'}"
-        f" ({sum(r['ok'] for r in det)}/{len(det)})",
-        f"- LLM (threshold {THRESHOLD_LLM:.0%}): {llm_rate:.0%}"
-        f" ({sum(r['ok'] for r in llm)}/{len(llm)})",
-        f"- **Resultado: {'APROVADO' if aprovado else 'REPROVADO'}**",
+        "> ⚠️ Três medições DIFERENTES — nenhum número isolado é 'qualidade global':",
+        "> gates determinísticos (guardrails/contratos), heurísticas textuais",
+        "> (termos/citações esperados) e groundedness pelo juiz (informativo).",
         "",
-        "| Caso | Tipo | OK | Juiz | Falhas |",
-        "|------|------|----|------|--------|",
+        f"- **Gates determinísticos:** {'✅ 100%' if det_ok else '❌ FALHOU'}"
+        f" ({sum(r['ok'] for r in det)}/{len(det)}) — reprovou um, reprovou tudo.",
+        f"- **Heurísticas de texto (casos LLM):** {llm_rate:.0%}"
+        f" ({sum(r['ok'] for r in llm)}/{len(llm)}, threshold {THRESHOLD_LLM:.0%})"
+        " — medem presença de termos/citações, NÃO correção semântica.",
+        (f"- **Groundedness (juiz {JUDGE_MODEL}):** média {sum(juizes)/len(juizes):.1f}/10 "
+         f"em {len(juizes)} casos — informativo; juiz pequeno tem viés e variância."
+         if juizes else "- **Groundedness (juiz):** desligado nesta execução (EVALS_JUDGE=1 para ligar)."),
+        f"- **Gate da esteira: {'APROVADO' if aprovado else 'REPROVADO'}** "
+        "(determinísticos 100% E heurísticas ≥ threshold).",
+        "",
+        "Divergência heurística ✅ × juiz baixo = caso para revisão humana, não para média.",
+        "",
+        "| Caso | Tipo | Heurística | Juiz | Falhas |",
+        "|------|------|-----------|------|--------|",
     ]
     linhas += [
         f"| {r['id']} | {r['tipo']} | {'✅' if r['ok'] else '❌'} | "
@@ -156,8 +184,11 @@ def main() -> int:
     ]
     (RESULTS / f"report-{carimbo}.md").write_text("\n".join(linhas), encoding="utf-8")
 
-    print(f"\nDeterminísticos: {'OK' if det_ok else 'FALHOU'} | LLM: {llm_rate:.0%} "
-          f"(threshold {THRESHOLD_LLM:.0%}) -> {'APROVADO' if aprovado else 'REPROVADO'}")
+    print(f"\nGates determinísticos: {'OK' if det_ok else 'FALHOU'} | "
+          f"heurísticas de texto: {llm_rate:.0%} (threshold {THRESHOLD_LLM:.0%})"
+          + (f" | juiz (informativo): média {sum(juizes)/len(juizes):.1f}/10" if juizes else ""))
+    print(f"Gate da esteira: {'APROVADO' if aprovado else 'REPROVADO'} "
+          "(heurística aprovada ≠ resposta semanticamente correta — divergências vão para revisão humana)")
     print(f"Relatórios em {RESULTS}")
     return 0 if aprovado else 1
 

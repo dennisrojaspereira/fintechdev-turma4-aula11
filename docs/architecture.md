@@ -43,11 +43,18 @@ stateDiagram-v2
 
 ## Concorrência e idempotência (RNF-01)
 
-A chave de idempotência é **reservada atomicamente** dentro do lock do store
-(`reserve_idempotency_key`): a primeira requisição grava a reserva e prossegue;
-as demais recebem a transferência existente (ou `409` se o payload divergir).
-O anti-padrão *check-then-act* (consultar e depois gravar em passos separados)
-é exatamente o bug demonstrado no checkpoint `implemented`.
+A chave de idempotência é **reservada atomicamente** dentro do lock do store:
+a primeira requisição grava a reserva e prossegue; as demais recebem a
+transferência existente (ou `409` se o payload divergir). O anti-padrão
+*check-then-act* (consultar e depois gravar em passos separados) é exatamente
+o bug demonstrado no checkpoint `implemented`.
+
+> ⚠️ **Limite do lab:** o `threading.Lock` só protege **um processo**. Com
+> múltiplas réplicas da API (produção), a atomicidade precisa vir de garantia
+> **persistente e compartilhada**: transação + `UNIQUE(idempotency_key)` no
+> banco (`INSERT ... ON CONFLICT`), ou lock distribuído. O teste de
+> concorrência deste repo cobre o cenário intra-processo, onde o bug didático
+> vive — o princípio (reserva atômica, nunca check-then-act) é o mesmo.
 
 ## Dinheiro
 

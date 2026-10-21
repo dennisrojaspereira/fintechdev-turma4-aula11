@@ -31,7 +31,7 @@ services:
     mem_limit: 1g
 
   langfuse:
-    image: langfuse/langfuse:2
+    image: langfuse/langfuse:2.95.11  # versao testada em 2026-10-21; v3 exige ClickHouse/Redis/MinIO
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +47,7 @@ services:
     mem_limit: 1536m
 
   langflow:
-    image: langflowai/langflow:latest
+    image: langflowai/langflow:1.12.7  # versao testada em 2026-10-21
     depends_on:
       postgres:
         condition: service_healthy

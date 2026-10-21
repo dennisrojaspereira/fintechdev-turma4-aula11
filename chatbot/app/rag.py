@@ -7,6 +7,8 @@ Com chaves do Langfuse no ambiente, cada chamada gera um trace completo
 from __future__ import annotations
 
 import os
+import re
+import unicodedata
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama, OllamaEmbeddings
@@ -20,10 +22,15 @@ PROMPT_RAG = ChatPromptTemplate.from_messages(
             "system",
             "Você é o assistente informativo da TechPix, uma fintech FICTÍCIA de "
             "laboratório. Responda em português, em até 5 frases, APENAS com base "
-            "no CONTEXTO abaixo. Cite as fontes usadas no formato [nome-da-fonte]. "
-            "Se o contexto não contém a resposta, diga explicitamente que não há "
-            "essa informação na base de conhecimento e não invente. Você nunca "
-            "executa transferências nem acessa dados de contas.\n\nCONTEXTO:\n{contexto}",
+            "no CONTEXTO abaixo. Se o contexto não contém a resposta, diga "
+            "explicitamente que não há essa informação na base de conhecimento e "
+            "não invente. Você nunca executa transferências nem acessa dados de "
+            "contas.\n"
+            "OBRIGATÓRIO: termine a resposta com uma última linha que lista, entre "
+            "colchetes, só as fontes do contexto que você realmente usou. Por "
+            "exemplo, se os trechos usados vieram de [limites] e [prazos-horarios], "
+            "a última linha é:\nFontes: [limites] [prazos-horarios]\n\n"
+            "CONTEXTO:\n{contexto}",
         ),
         ("human", "{pergunta}"),
     ]
@@ -40,6 +47,32 @@ PROMPT_SEM_RAG = ChatPromptTemplate.from_messages(
         ("human", "{pergunta}"),
     ]
 )
+
+
+def _palavras(texto: str) -> set[str]:
+    """Palavras de conteudo normalizadas (sem acento, >= 4 chars)."""
+    t = unicodedata.normalize("NFKD", texto.lower())
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    return set(re.findall(r"[a-z0-9]{4,}", t))
+
+
+def _fontes_utilizadas(resposta: str, docs: list) -> list[str]:
+    """Atribuicao ESTRUTURAL de fontes: modelo pequeno nao segue contrato de
+    citacao por prompt de forma confiavel, entao a API mede quais trechos
+    recuperados sustentam a resposta — marcador explicito [fonte] OU
+    sobreposicao lexical alta entre a resposta e o conteudo do trecho."""
+    resp = _palavras(resposta)
+    por_fonte: dict[str, set[str]] = {}
+    for d in docs:
+        fonte = d.metadata.get("fonte", "desconhecida")
+        por_fonte.setdefault(fonte, set()).update(_palavras(d.page_content))
+    utilizadas = []
+    for fonte, palavras_fonte in por_fonte.items():
+        explicita = f"[{fonte}]" in resposta
+        cobertura = len(resp & palavras_fonte) / max(len(resp), 1)
+        if explicita or cobertura >= 0.45:
+            utilizadas.append(fonte)
+    return sorted(utilizadas)
 
 
 def _langfuse_callbacks() -> list:
@@ -99,5 +132,20 @@ class Responder:
             {"contexto": contexto or "(nenhum trecho recuperado)", "pergunta": pergunta},
             config=config,
         )
-        fontes = sorted({d.metadata.get("fonte", "desconhecida") for d in docs})
-        return {"resposta": msg.content, "fontes": fontes, "modo": "rag"}
+        # Recuperar um documento NAO significa fundamentar a resposta nele:
+        # "fontes" sao as efetivamente utilizadas (citacao explicita ou
+        # atribuicao lexical); as recuperadas vao separadas, e os trechos
+        # alimentam o juiz dos evals.
+        recuperadas = sorted({d.metadata.get("fonte", "desconhecida") for d in docs})
+        citadas = _fontes_utilizadas(msg.content, docs)
+        trechos = [
+            {"fonte": d.metadata.get("fonte", "desconhecida"), "texto": d.page_content}
+            for d in docs
+        ]
+        return {
+            "resposta": msg.content,
+            "fontes": citadas,
+            "fontes_recuperadas": recuperadas,
+            "trechos": trechos,
+            "modo": "rag",
+        }

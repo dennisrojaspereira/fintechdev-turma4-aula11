@@ -4,11 +4,13 @@ O arquivo `techpix_rag_flow.json` descreve o fluxo RAG equivalente ao de
 `chatbot/app/rag.py`, para importar no Langflow (http://localhost:7860 →
 **Import Flow**).
 
-> ⚠️ O formato de export do Langflow muda entre versões. Este JSON foi escrito
-> para a família 1.x; se a importação falhar ou algum nó vier "desligado",
-> reconstrua o fluxo em ~3 minutos com o passo a passo abaixo (é inclusive um
-> bom momento da demo: mostra que **canvas visual e código são duas interfaces
-> para a mesma cadeia**, não substitutos diretos).
+> ✅ **Importação verificada em 2026-10-21 no Langflow 1.12.7** (via
+> `POST /api/v1/flows/`, 7 nós aceitos). ⚠️ Os templates dos nós são
+> simplificados: antes de executar, abra o fluxo e confira/religue as conexões
+> e credenciais no canvas — ou reconstrua em ~3 minutos com o passo a passo
+> abaixo (é inclusive um bom momento da demo: mostra que **canvas visual e
+> código são duas interfaces para a mesma cadeia**, não substitutos diretos).
+> O formato de export muda entre versões do Langflow.
 
 ## Reconstrução manual (3 min)
 
